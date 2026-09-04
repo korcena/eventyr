@@ -15,6 +15,8 @@ export interface EventRow {
   created_at: string;
   updated_at: string;
   invite_token: string;
+  telegram_bot_token: string | null;
+  telegram_chat_id: string | null;
 }
 
 export async function getEventsForUser(): Promise<EventRow[]> {

@@ -1,9 +1,13 @@
 import { getEvent } from "@/lib/actions/events";
 import { getRoles, getMembers } from "@/lib/actions/members";
 import { hasPermission } from "@/lib/permissions";
+import { getCurrentUser } from "@/lib/auth";
+import { getCalendarTokens } from "@/lib/calendar";
 import { Card } from "@/components/ui";
 import { RolesManager } from "@/components/settings/RolesManager";
 import { InviteLink } from "@/components/settings/InviteLink";
+import { CalendarSettings } from "@/components/settings/CalendarSettings";
+import { TelegramConfig } from "@/components/settings/TelegramConfig";
 
 export default async function SettingsPage({
   params,
@@ -20,6 +24,11 @@ export default async function SettingsPage({
   const roles = await getRoles(eventId);
   const members = await getMembers(eventId);
   const baseUrl = process.env.APP_BASE_URL || "http://localhost:3000";
+
+  const user = await getCurrentUser();
+  const calendarTokens = user
+    ? await getCalendarTokens(user.id)
+    : { connected: false, calendarId: null };
 
   return (
     <div className="space-y-3 p-4">
@@ -84,35 +93,12 @@ export default async function SettingsPage({
         </Card>
       )}
 
-      <Card>
-        <h3 className="mb-3 text-sm font-semibold text-text-primary">Telegram Reminders</h3>
-        <p className="mb-3 text-xs text-text-tertiary">
-          Configure bot to send reminders 3 and 1 day before due dates.
-        </p>
-        <div className="grid grid-cols-2 gap-3">
-          <div>
-            <label className="mb-1 block text-[10px] uppercase tracking-wider text-text-tertiary">Bot Token</label>
-            <input
-              type="password"
-              placeholder="••••••••••••"
-              className="w-full rounded-md border border-border bg-bg-tertiary px-3 py-2 text-sm text-text-primary"
-            />
-          </div>
-          <div>
-            <label className="mb-1 block text-[10px] uppercase tracking-wider text-text-tertiary">Chat ID</label>
-            <input
-              placeholder="-1001234567890"
-              className="w-full rounded-md border border-border bg-bg-tertiary px-3 py-2 text-sm text-text-primary"
-            />
-          </div>
-        </div>
-        <div className="mt-2 flex gap-2">
-          <button className="rounded-md bg-accent px-3 py-1.5 text-xs text-white">Save</button>
-          <button className="rounded-md border border-border px-3 py-1.5 text-xs text-text-secondary">
-            Send Test Message
-          </button>
-        </div>
-      </Card>
+      {canEditEvent && (
+        <TelegramConfig
+          eventId={eventId}
+          configured={!!event.telegram_bot_token && !!event.telegram_chat_id}
+        />
+      )}
 
       {canManageMembers && <RolesManager eventId={eventId} />}
 
@@ -150,6 +136,12 @@ export default async function SettingsPage({
       {canManageMembers && (
         <InviteLink token={event.invite_token} baseUrl={baseUrl} onRegenerate={() => {}} />
       )}
+
+      <CalendarSettings
+        eventId={eventId}
+        connected={calendarTokens.connected}
+        calendarId={calendarTokens.calendarId}
+      />
 
       {canEditEvent && (
         <div className="rounded-lg border border-error p-4">

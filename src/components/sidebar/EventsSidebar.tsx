@@ -83,6 +83,17 @@ export function EventsSidebar({ events, user }: { events: SidebarEvent[]; user: 
         >
           AI Chat
         </Link>
+        <Link
+          href="/app/settings"
+          className={cn(
+            "mb-1 flex items-center gap-1.5 rounded-md px-2 py-1.5 text-[12px] transition-colors",
+            pathname === "/app/settings"
+              ? "bg-bg-tertiary font-medium text-accent"
+              : "text-text-secondary hover:text-text-primary",
+          )}
+        >
+          Settings
+        </Link>
         <form action={logout} className="flex items-center gap-2 px-1 py-1">
           <div className="flex h-7 w-7 items-center justify-center rounded-full bg-[#333] text-[10px] text-text-secondary">
             {initials}

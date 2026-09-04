@@ -1,16 +1,8 @@
 #!/usr/bin/env tsx
 import { createAdminClient } from "@/lib/supabase/admin";
-import { decrypt } from "@/lib/crypto";
 import { sendMessage } from "@/lib/telegram";
 
 type ReminderDaysBefore = 3 | 1;
-
-interface EventConfig {
-  id: string;
-  name: string;
-  telegram_bot_token: string;
-  telegram_chat_id: string;
-}
 
 interface DueTodo {
   id: string;
@@ -20,6 +12,7 @@ interface DueTodo {
   status: string;
   assigned_to: string | null;
   assignee_profile: { display_name: string | null } | null;
+  events: { name: string } | null;
 }
 
 const REMINDER_DAYS: ReminderDaysBefore[] = [3, 1];
@@ -28,6 +21,7 @@ const BASE_BACKOFF_MS = 2000;
 
 const DRY_RUN = process.env.DRY_RUN === "true";
 const APP_BASE_URL = process.env.APP_BASE_URL ?? "http://localhost:3000";
+const BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
 
 function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
@@ -50,14 +44,11 @@ function buildMessage(
   todo: DueTodo,
   daysBefore: ReminderDaysBefore,
 ): string {
-  const assignee = todo.assignee_profile?.display_name ?? "Unassigned";
-  const todoUrl = `${APP_BASE_URL}/app/events/${todo.event_id ?? ""}/todos/${todo.id}`;
-  const when =
-    daysBefore === 1 ? "*tomorrow*" : `*in ${daysBefore} days*`;
+  const todoUrl = `${APP_BASE_URL}/app/events/${todo.event_id}/todos/${todo.id}`;
+  const when = daysBefore === 1 ? "*tomorrow*" : `*in ${daysBefore} days*`;
   return [
     `⏰ *Reminder: ${todo.title}*`,
     `Event: ${eventName}`,
-    `Assignee: ${assignee}`,
     `Due: ${formatDueDate(todo.due_date)} (${when})`,
     `Open: ${todoUrl}`,
   ].join("\n");
@@ -115,17 +106,15 @@ async function sendWithRetry(
   return false;
 }
 
-async function processEvent(
-  supabase: ReturnType<typeof createAdminClient>,
-  event: EventConfig,
-): Promise<void> {
-  let botToken: string;
-  try {
-    botToken = decrypt(event.telegram_bot_token);
-  } catch {
-    console.error(`[cron] event ${event.id}: failed to decrypt bot token, skipping`);
-    return;
+async function main(): Promise<void> {
+  if (DRY_RUN) console.log("[cron] DRY_RUN enabled — no messages will be sent");
+
+  if (!BOT_TOKEN) {
+    console.error("[cron] TELEGRAM_BOT_TOKEN env var is not set");
+    process.exit(1);
   }
+
+  const supabase = createAdminClient();
 
   for (const daysBefore of REMINDER_DAYS) {
     const dueWindowStart = new Date();
@@ -144,15 +133,16 @@ async function processEvent(
         status,
         assigned_to,
         event_id,
-        assignee_profile:profiles!assigned_to(display_name)
+        assignee_profile:profiles!assigned_to(display_name),
+        events:event_id(name)
       `)
-      .eq("event_id", event.id)
       .neq("status", "completed")
+      .not("assigned_to", "is", null)
       .gte("due_date", dueWindowStart.toISOString())
       .lt("due_date", dueWindowEnd.toISOString());
 
     if (error) {
-      console.error(`[cron] event ${event.id}: query failed:`, error.message);
+      console.error(`[cron] query failed:`, error.message);
       continue;
     }
 
@@ -163,19 +153,33 @@ async function processEvent(
         continue;
       }
 
-      const text = buildMessage(event.name, todo, daysBefore);
+      const eventName = todo.events?.name ?? "Unknown event";
+
+      // Get the assignee's Telegram chat ID
+      const { data: tgUser } = await supabase
+        .from("telegram_users")
+        .select("chat_id")
+        .eq("user_id", todo.assigned_to)
+        .single();
+
+      if (!tgUser?.chat_id) {
+        console.log(`[cron] skip todo ${todo.id}: assignee has no Telegram connected`);
+        continue;
+      }
+
+      const text = buildMessage(eventName, todo, daysBefore);
 
       if (DRY_RUN) {
-        console.log(`[cron] DRY_RUN — would send to ${event.telegram_chat_id}:`);
+        console.log(`[cron] DRY_RUN — would send to ${tgUser.chat_id}:`);
         console.log(text);
         continue;
       }
 
-      const ok = await sendWithRetry(botToken, event.telegram_chat_id, text);
+      const ok = await sendWithRetry(BOT_TOKEN, tgUser.chat_id, text);
       await logReminder(
         supabase,
         todo.id,
-        event.id,
+        todo.event_id,
         daysBefore,
         ok ? "sent" : "failed",
         ok ? null : "Telegram send failed after retries",
@@ -183,33 +187,6 @@ async function processEvent(
       console.log(
         `[cron] todo ${todo.id} (${daysBefore}d): ${ok ? "sent" : "failed"}`,
       );
-    }
-  }
-}
-
-async function main(): Promise<void> {
-  if (DRY_RUN) console.log("[cron] DRY_RUN enabled — no messages will be sent");
-
-  const supabase = createAdminClient();
-
-  const { data: events, error } = await supabase
-    .from("events")
-    .select("id, name, telegram_bot_token, telegram_chat_id")
-    .not("telegram_bot_token", "is", null)
-    .not("telegram_chat_id", "is", null);
-
-  if (error) {
-    console.error("[cron] failed to fetch events:", error.message);
-    process.exit(1);
-  }
-
-  console.log(`[cron] found ${(events as EventConfig[]).length} configured event(s)`);
-
-  for (const event of (events as EventConfig[]) ?? []) {
-    try {
-      await processEvent(supabase, event);
-    } catch (err) {
-      console.error(`[cron] event ${event.id} threw:`, err);
     }
   }
 

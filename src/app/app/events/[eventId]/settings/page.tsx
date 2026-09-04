@@ -8,7 +8,6 @@ import { Card } from "@/components/ui";
 import { RolesManager } from "@/components/settings/RolesManager";
 import { InviteLink } from "@/components/settings/InviteLink";
 import { CalendarSettings } from "@/components/settings/CalendarSettings";
-import { TelegramConfig } from "@/components/settings/TelegramConfig";
 import { DeleteEventButton } from "@/components/settings/DeleteEventButton";
 
 export default async function SettingsPage({
@@ -93,13 +92,6 @@ export default async function SettingsPage({
             </div>
           </form>
         </Card>
-      )}
-
-      {canEditEvent && (
-        <TelegramConfig
-          eventId={eventId}
-          configured={!!event.telegram_bot_token && !!event.telegram_chat_id}
-        />
       )}
 
       {canManageMembers && <RolesManager eventId={eventId} />}

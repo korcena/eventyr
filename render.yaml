@@ -29,6 +29,8 @@ services:
         sync: false
       - key: APP_BASE_URL
         sync: false
+      - key: TELEGRAM_BOT_TOKEN
+        sync: false
   - type: cron
     name: eventyr-reminders
     schedule: "0 9 * * *"
@@ -43,6 +45,8 @@ services:
       - key: ENCRYPTION_KEY
         sync: false
       - key: APP_BASE_URL
+        sync: false
+      - key: TELEGRAM_BOT_TOKEN
         sync: false
       - key: DRY_RUN
         value: "false"

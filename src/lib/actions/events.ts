@@ -3,6 +3,8 @@
 import { createClient } from "@/lib/supabase/server";
 import { getCurrentUser } from "@/lib/auth";
 import { randomBytes } from "crypto";
+import { redirect } from "next/navigation";
+import { revalidatePath } from "next/cache";
 
 export type EventType = "hackathon" | "workshop" | "social" | "other";
 
@@ -77,6 +79,7 @@ export async function createEvent(prevState: ActionResult, formData: FormData): 
 
   if (error) return { error: error.message };
 
+  revalidatePath("/app");
   redirect("/app");
   return { error: null };
 }
@@ -126,5 +129,3 @@ export async function regenerateInviteToken(eventId: string): Promise<ActionResu
   if (error) return { error: error.message };
   return { error: null };
 }
-
-import { redirect } from "next/navigation";

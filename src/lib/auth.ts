@@ -12,12 +12,12 @@ export async function getCurrentUser() {
     .from("profiles")
     .select("id, display_name, avatar_url")
     .eq("id", user.id)
-    .single();
+    .maybeSingle();
 
   return {
     id: user.id,
     email: user.email ?? "",
-    displayName: profile?.display_name ?? "",
+    displayName: profile?.display_name ?? user.email?.split("@")[0] ?? "User",
     avatarUrl: profile?.avatar_url ?? null,
   };
 }

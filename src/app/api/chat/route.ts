@@ -1,5 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
-import { searchRelevantContent, type RagChunk } from "@/lib/rag";
+import { fetchContext, type ContextChunk } from "@/lib/rag";
 import { chatStreamToSSE } from "@/lib/llm";
 
 export const runtime = "nodejs";
@@ -28,7 +28,7 @@ function checkRateLimit(userId: string): { allowed: boolean; remaining: number }
   return { allowed: true, remaining: RATE_LIMIT - bucket.count };
 }
 
-function buildSystemPrompt(chunks: RagChunk[]): string {
+function buildSystemPrompt(chunks: ContextChunk[]): string {
   const context = chunks
     .map((c, i) => {
       return `[${i + 1}] (event: ${c.eventId}, source: ${c.sourceType}/${c.sourceId})\n${c.content}`;
@@ -38,7 +38,7 @@ function buildSystemPrompt(chunks: RagChunk[]): string {
   return [
     "You are Eventyr's assistant. Answer questions about the user's events, todos, pages, and shortcuts.",
     "Answer based ONLY on the provided event data context below. If the context is empty or does not contain the answer, say you don't have enough information.",
-    "When you use a piece of context, cite it by referring to the source type and source id (e.g. [page_block: <id>]).",
+    "When you use a piece of context, cite it by referring to the source type and source id (e.g. [page: <id>]).",
     "Be concise and helpful. Use markdown for structure when useful.",
     "",
     "Context from the user's events:",
@@ -46,14 +46,14 @@ function buildSystemPrompt(chunks: RagChunk[]): string {
   ].join("\n");
 }
 
-function buildCitationsSSE(chunks: RagChunk[]): string {
+function buildCitationsSSE(chunks: ContextChunk[]): string {
   const payload = {
     citations: chunks.map((c) => ({
       sourceType: c.sourceType,
       sourceId: c.sourceId,
       eventId: c.eventId,
       snippet: c.content.slice(0, 160),
-      similarity: c.similarity,
+      similarity: 1,
     })),
   };
   return `event: citations\ndata: ${JSON.stringify(payload)}\n\n`;
@@ -104,10 +104,9 @@ export async function POST(request: Request) {
     );
   }
 
-  const chunks = await searchRelevantContent(
+  const chunks = await fetchContext(
     user.id,
     message,
-    5,
     body.eventId,
   );
 

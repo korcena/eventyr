@@ -1,5 +1,6 @@
 import { getCurrentUser } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
+import { getPendingTelegram } from "@/lib/actions/telegram-user";
 import { TelegramConnect } from "@/components/settings/TelegramConnect";
 import { logout } from "@/app/(auth)/actions";
 import { Card } from "@/components/ui";
@@ -13,8 +14,9 @@ export default async function ProfileSettingsPage() {
     .from("telegram_users")
     .select("chat_id")
     .eq("user_id", user.id)
-    .single();
+    .maybeSingle();
 
+  const pendingRequests = await getPendingTelegram();
   const botUsername = process.env.TELEGRAM_BOT_USERNAME ?? null;
 
   return (
@@ -46,6 +48,7 @@ export default async function ProfileSettingsPage() {
         <TelegramConnect
           chatId={telegramData?.chat_id ?? null}
           botUsername={botUsername}
+          pendingRequests={pendingRequests as { id: string; chat_id: string; email: string; telegram_username: string | null; created_at: string }[]}
         />
       </div>
     </div>

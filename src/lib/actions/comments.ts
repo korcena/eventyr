@@ -2,6 +2,7 @@
 
 import { createClient } from "@/lib/supabase/server";
 import { getCurrentUser } from "@/lib/auth";
+import { refresh } from "next/cache";
 
 export interface CommentRow {
   id: string;
@@ -42,6 +43,7 @@ export async function addComment(todoId: string, content: string): Promise<Actio
   });
 
   if (error) return { error: error.message };
+  refresh();
   return { error: null };
 }
 
@@ -53,6 +55,7 @@ export async function updateComment(commentId: string, content: string): Promise
     .eq("id", commentId);
 
   if (error) return { error: error.message };
+  refresh();
   return { error: null };
 }
 
@@ -60,5 +63,6 @@ export async function deleteComment(commentId: string): Promise<ActionResult> {
   const supabase = await createClient();
   const { error } = await supabase.from("todo_comments").delete().eq("id", commentId);
   if (error) return { error: error.message };
+  refresh();
   return { error: null };
 }

@@ -23,7 +23,7 @@ export type ActionResult = { error: string | null };
 
 export async function getTodos(eventId: string): Promise<TodoRow[]> {
   const supabase = await createClient();
-  const { data } = await supabase
+  const { data, error } = await supabase
     .from("todos")
     .select(`
       *,
@@ -32,19 +32,28 @@ export async function getTodos(eventId: string): Promise<TodoRow[]> {
     .eq("event_id", eventId)
     .order("due_date", { ascending: true, nullsFirst: false });
 
+  if (error) {
+    console.error("[getTodos] Error:", error);
+  }
+
   return (data as TodoRow[]) ?? [];
 }
 
 export async function getTodo(todoId: string): Promise<TodoRow | null> {
   const supabase = await createClient();
-  const { data } = await supabase
+  const { data, error } = await supabase
     .from("todos")
     .select(`
       *,
       assignee_profile:profiles!assigned_to(display_name)
     `)
     .eq("id", todoId)
-    .single();
+    .maybeSingle();
+
+  if (error) {
+    console.error("[getTodo] Error:", error);
+  }
+
   return (data as TodoRow) ?? null;
 }
 

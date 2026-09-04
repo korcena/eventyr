@@ -5,7 +5,8 @@ import { getDependencies, getDependents } from "@/lib/actions/dependencies";
 import { getComments } from "@/lib/actions/comments";
 import { getMembers } from "@/lib/actions/members";
 import { getTodos } from "@/lib/actions/todos";
-import { daysLeft, formatDaysLeft, STATUS_LABELS } from "@/lib/todo-status";
+import { getCurrentUser } from "@/lib/auth";
+import { daysLeft, formatDaysLeft } from "@/lib/todo-status";
 import { Card } from "@/components/ui";
 import { StatusBadge } from "@/components/todo/StatusBadge";
 import { CommentThread } from "@/components/todo/CommentThread";
@@ -21,12 +22,13 @@ export default async function TodoDetailPage({
   const todo = await getTodo(todoId);
   if (!todo || todo.event_id !== eventId) notFound();
 
-  const [dependencies, dependents, comments, members, allTodos] = await Promise.all([
+  const [dependencies, dependents, comments, members, allTodos, currentUser] = await Promise.all([
     getDependencies(todoId),
     getDependents(todoId),
     getComments(todoId),
     getMembers(eventId),
     getTodos(eventId),
+    getCurrentUser(),
   ]);
 
   const days = daysLeft(todo.due_date);
@@ -102,7 +104,7 @@ export default async function TodoDetailPage({
         </Card>
 
         <Card>
-          <CommentThread todoId={todo.id} comments={comments} />
+          <CommentThread todoId={todo.id} comments={comments} currentUserId={currentUser?.id ?? ""} />
         </Card>
       </div>
     </div>

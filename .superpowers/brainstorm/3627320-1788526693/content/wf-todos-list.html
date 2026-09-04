@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; overflow: hidden; }
+  :root {
+    --bg-primary: #0D0D0D; --bg-secondary: #161616; --bg-tertiary: #1E1E1E;
+    --bg-card: #1A1A1A; --border: #2A2A2A; --border-light: #333;
+    --text-primary: #F5F5F7; --text-secondary: #999; --text-tertiary: #666;
+    --accent: #4F8DF7; --success: #22C55E; --warning: #F59E0B;
+    --error: #EF4444; --purple: #7C3AED;
+  }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif; background: var(--bg-primary); color: var(--text-primary); display: flex; flex-direction: column; line-height: 1.5; }
+  .header { background: var(--bg-secondary); padding: 0.5rem 1.5rem; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border); flex-shrink: 0; }
+  .header h1 { font-size: 0.8rem; font-weight: 500; color: var(--text-secondary); }
+  .header .status { font-size: 0.7rem; color: var(--success); display: flex; align-items: center; gap: 0.4rem; }
+  .header .status::before { content: ''; width: 6px; height: 6px; background: var(--success); border-radius: 50%; }
+  .main { flex: 1; overflow-y: auto; }
+  #claude-content { padding: 2rem; min-height: 100%; }
+  .indicator-bar { background: var(--bg-secondary); border-top: 1px solid var(--border); padding: 0.5rem 1.5rem; flex-shrink: 0; text-align: center; }
+  .indicator-bar span { font-size: 0.75rem; color: var(--text-secondary); }
+  h2 { font-size: 1.5rem; font-weight: 600; margin-bottom: 0.5rem; }
+  h3 { font-size: 1.1rem; font-weight: 600; margin-bottom: 0.25rem; }
+  .subtitle { color: var(--text-secondary); margin-bottom: 1.5rem; }
+  .label { font-size: 0.7rem; color: var(--text-tertiary); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.5rem; }
+  .options { display: flex; flex-direction: column; gap: 0.75rem; margin-top: 1rem; }
+  .option { background: var(--bg-secondary); border: 2px solid var(--border); border-radius: 10px; padding: 1rem 1.25rem; cursor: pointer; transition: all 0.15s ease; display: flex; align-items: flex-start; gap: 1rem; }
+  .option:hover { border-color: var(--accent); }
+  .option.selected { background: rgba(79, 141, 247, 0.1); border-color: var(--accent); }
+  .option .letter { background: var(--bg-tertiary); color: var(--text-secondary); width: 1.75rem; height: 1.75rem; border-radius: 6px; display: flex; align-items: center; justify-content: center; font-weight: 600; font-size: 0.85rem; flex-shrink: 0; }
+  .option.selected .letter { background: var(--accent); color: white; }
+  .option .content { flex: 1; }
+  .option .content h3 { font-size: 0.95rem; margin-bottom: 0.15rem; }
+  .option .content p { color: var(--text-secondary); font-size: 0.85rem; margin: 0; }
+  .mockup { background: var(--bg-secondary); border: 1px solid var(--border); border-radius: 10px; overflow: hidden; margin-bottom: 1.5rem; }
+  .mockup-header { background: var(--bg-tertiary); padding: 0.5rem 1rem; font-size: 0.75rem; color: var(--text-secondary); border-bottom: 1px solid var(--border); }
+  .mockup-body { padding: 0; }
+  .mock-button { background: var(--accent); color: white; border: none; padding: 0.35rem 0.8rem; border-radius: 6px; font-size: 0.8rem; cursor: pointer; }
+  .badge { padding: 2px 8px; border-radius: 10px; font-size: 10px; }
+  .status-dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; }
+</style>
+</head>
+<body>
+<div class="header"><h1>Eventyr Wireframes</h1><div class="status">Dark Mode</div></div>
+<div class="main"><div id="claude-content">
+
+<h2>Wireframe 2 — Todos Tab (Table)</h2>
+<p class="subtitle">Todos in a table with columns: status, task, assigned to, due date, days left, dependencies. Filterable and sortable.</p>
+
+<div class="mockup">
+  <div class="mockup-header">Todos Tab — Table View</div>
+  <div class="mockup-body">
+    <div style="display:flex;height:520px;font-size:13px">
+
+      <!-- Sidebar -->
+      <div style="width:200px;border-right:1px solid var(--border);background:var(--bg-secondary);padding:12px 10px;display:flex;flex-direction:column;gap:4px">
+        <div style="font-weight:700;font-size:15px;margin-bottom:8px;color:var(--text-primary);display:flex;align-items:center;gap:6px">
+          <span style="background:var(--accent);color:#fff;width:22px;height:22px;border-radius:5px;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800">E</span>
+          Eventyr
+        </div>
+        <div class="label" style="margin-top:8px">Your Events</div>
+        <div style="background:var(--bg-tertiary);color:var(--text-primary);padding:6px 8px;border-radius:6px;font-weight:500">Hackathon 2026</div>
+        <div style="color:var(--text-secondary);padding:6px 8px;border-radius:6px">Rust Workshop</div>
+        <div style="color:var(--text-secondary);padding:6px 8px;border-radius:6px">Tech Socials Q4</div>
+      </div>
+
+      <!-- Main area -->
+      <div style="flex:1;display:flex;flex-direction:column">
+
+        <!-- Top bar -->
+        <div style="border-bottom:1px solid var(--border);padding:10px 16px;display:flex;align-items:center;justify-content:space-between">
+          <div style="display:flex;align-items:center;gap:10px">
+            <span style="font-weight:600;color:var(--text-primary);font-size:14px">Hackathon 2026</span>
+            <span class="badge" style="background:#1E3A5F;color:var(--accent)">HACKATHON</span>
+          </div>
+        </div>
+
+        <!-- Tabs -->
+        <div style="border-bottom:1px solid var(--border);padding:0 16px;display:flex;gap:0">
+          <div style="padding:10px 14px;color:var(--text-tertiary)">Overview</div>
+          <div style="padding:10px 14px;border-bottom:2px solid var(--accent);color:var(--text-primary);font-weight:500">Todos <span style="background:var(--bg-tertiary);padding:1px 6px;border-radius:8px;font-size:10px">12</span></div>
+          <div style="padding:10px 14px;color:var(--text-tertiary)">Pages</div>
+          <div style="padding:10px 14px;color:var(--text-tertiary)">Shortcuts</div>
+          <div style="padding:10px 14px;color:var(--text-tertiary)">Settings</div>
+        </div>
+
+        <!-- Toolbar -->
+        <div style="padding:10px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;gap:12px">
+          <div style="display:flex;gap:8px;align-items:center">
+            <select style="background:var(--bg-tertiary);border:1px solid var(--border);color:var(--text-secondary);padding:4px 8px;border-radius:6px;font-size:12px">
+              <option>All Status</option>
+            </select>
+            <select style="background:var(--bg-tertiary);border:1px solid var(--border);color:var(--text-secondary);padding:4px 8px;border-radius:6px;font-size:12px">
+              <option>All Assignees</option>
+            </select>
+            <input placeholder="Search todos..." style="background:var(--bg-tertiary);border:1px solid var(--border);color:var(--text-primary);padding:4px 8px;border-radius:6px;font-size:12px;width:160px"/>
+          </div>
+          <button class="mock-button">+ Add Todo</button>
+        </div>
+
+        <!-- Todo table -->
+        <div style="flex:1;overflow:auto;padding:16px">
+          <table style="width:100%;border-collapse:collapse;font-size:12px">
+            <thead>
+              <tr style="border-bottom:1px solid var(--border)">
+                <th style="text-align:left;padding:8px 10px;color:var(--text-tertiary);font-weight:600;font-size:11px;text-transform:uppercase;letter-spacing:0.03em;width:120px">Status <span style="color:var(--accent)">↕</span></th>
+                <th style="text-align:left;padding:8px 10px;color:var(--text-tertiary);font-weight:600;font-size:11px;text-transform:uppercase;letter-spacing:0.03em">Task <span style="color:var(--accent)">↕</span></th>
+                <th style="text-align:left;padding:8px 10px;color:var(--text-tertiary);font-weight:600;font-size:11px;text-transform:uppercase;letter-spacing:0.03em;width:100px">Assigned To</th>
+                <th style="text-align:left;padding:8px 10px;color:var(--accent);font-weight:600;font-size:11px;text-transform:uppercase;letter-spacing:0.03em;width:110px">Due Date ↑</th>
+                <th style="text-align:left;padding:8px 10px;color:var(--text-tertiary);font-weight:600;font-size:11px;text-transform:uppercase;letter-spacing:0.03em;width:80px">Days Left</th>
+                <th style="text-align:left;padding:8px 10px;color:var(--text-tertiary);font-weight:600;font-size:11px;text-transform:uppercase;letter-spacing:0.03em;width:120px">Dependencies</th>
+              </tr>
+            </thead>
+            <tbody>
+              <!-- Aug 25 -->
+              <tr style="border-bottom:1px solid var(--border);cursor:pointer;opacity:0.6">
+                <td style="padding:10px"><span style="display:inline-flex;align-items:center;gap:5px;background:rgba(34,197,94,0.15);padding:3px 8px;border-radius:10px;font-size:10px;color:var(--success)"><span class="status-dot" style="background:var(--success)"></span> Completed</span></td>
+                <td style="padding:10px;color:var(--text-secondary);text-decoration:line-through">Create sponsor list</td>
+                <td style="padding:10px"><div style="display:flex;align-items:center;gap:5px"><span style="background:#333;border-radius:50%;width:20px;height:20px;display:flex;align-items:center;justify-content:center;font-size:9px;color:var(--text-secondary)">JD</span> <span style="color:var(--text-tertiary);font-size:11px">John</span></div></td>
+                <td style="padding:10px;color:var(--text-tertiary)">Aug 25</td>
+                <td style="padding:10px;color:var(--success)">Done</td>
+                <td style="padding:10px;color:var(--text-tertiary)">—</td>
+              </tr>
+              <!-- Aug 28 -->
+              <tr style="border-bottom:1px solid var(--border);cursor:pointer;opacity:0.6">
+                <td style="padding:10px"><span style="display:inline-flex;align-items:center;gap:5px;background:rgba(34,197,94,0.15);padding:3px 8px;border-radius:10px;font-size:10px;color:var(--success)"><span class="status-dot" style="background:var(--success)"></span> Completed</span></td>
+                <td style="padding:10px;color:var(--text-secondary);text-decoration:line-through">Finalize hackathon theme</td>
+                <td style="padding:10px"><div style="display:flex;align-items:center;gap:5px"><span style="background:#333;border-radius:50%;width:20px;height:20px;display:flex;align-items:center;justify-content:center;font-size:9px;color:var(--text-secondary)">KA</span> <span style="color:var(--text-tertiary);font-size:11px">Kate</span></div></td>
+                <td style="padding:10px;color:var(--text-tertiary)">Aug 28</td>
+                <td style="padding:10px;color:var(--success)">Done</td>
+                <td style="padding:10px;color:var(--text-tertiary)">—</td>
+              </tr>
+              <!-- Aug 30 -->
+              <tr style="border-bottom:1px solid var(--border);cursor:pointer">
+                <td style="padding:10px"><span style="display:inline-flex;align-items:center;gap:5px;background:rgba(245,158,11,0.15);padding:3px 8px;border-radius:10px;font-size:10px;color:var(--warning)"><span class="status-dot" style="background:var(--warning)"></span> Blocked</span></td>
+                <td style="padding:10px;color:var(--text-primary)">Send out invites</td>
+                <td style="padding:10px"><div style="display:flex;align-items:center;gap:5px"><span style="background:#333;border-radius:50%;width:20px;height:20px;display:flex;align-items:center;justify-content:center;font-size:9px;color:var(--text-secondary)">SA</span> <span style="color:var(--text-secondary);font-size:11px">Sara</span></div></td>
+                <td style="padding:10px;color:var(--text-secondary)">Aug 30</td>
+                <td style="padding:10px;color:var(--error);font-weight:600">5 days over</td>
+                <td style="padding:10px;color:var(--warning);font-size:11px">⚠ Set up registration page</td>
+              </tr>
+              <!-- Sep 2 -->
+              <tr style="border-bottom:1px solid var(--border);cursor:pointer">
+                <td style="padding:10px"><span style="display:inline-flex;align-items:center;gap:5px;background:rgba(245,158,11,0.15);padding:3px 8px;border-radius:10px;font-size:10px;color:var(--warning)"><span class="status-dot" style="background:var(--warning)"></span> Blocked</span></td>
+                <td style="padding:10px;color:var(--text-primary)">Order catering</td>
+                <td style="padding:10px"><div style="display:flex;align-items:center;gap:5px"><span style="background:#333;border-radius:50%;width:20px;height:20px;display:flex;align-items:center;justify-content:center;font-size:9px;color:var(--text-secondary)">JD</span> <span style="color:var(--text-secondary);font-size:11px">John</span></div></td>
+                <td style="padding:10px;color:var(--text-secondary)">Sep 2</td>
+                <td style="padding:10px;color:var(--error);font-weight:600">2 days over</td>
+                <td style="padding:10px;color:var(--warning);font-size:11px">⚠ Confirm budget</td>
+              </tr>
+              <!-- Sep 3 -->
+              <tr style="border-bottom:1px solid var(--border);cursor:pointer">
+                <td style="padding:10px"><span style="display:inline-flex;align-items:center;gap:5px;background:rgba(79,141,247,0.15);padding:3px 8px;border-radius:10px;font-size:10px;color:var(--accent)"><span class="status-dot" style="background:var(--accent)"></span> In Progress</span></td>
+                <td style="padding:10px;color:var(--text-primary)">Confirm budget</td>
+                <td style="padding:10px"><div style="display:flex;align-items:center;gap:5px"><span style="background:#333;border-radius:50%;width:20px;height:20px;display:flex;align-items:center;justify-content:center;font-size:9px;color:var(--text-secondary)">KA</span> <span style="color:var(--text-secondary);font-size:11px">Kate</span></div></td>
+                <td style="padding:10px;color:var(--text-secondary)">Sep 3</td>
+                <td style="padding:10px;color:var(--error);font-weight:600">1 day over</td>
+                <td style="padding:10px;color:var(--text-tertiary)">—</td>
+              </tr>
+              <!-- Sep 6 -->
+              <tr style="border-bottom:1px solid var(--border);cursor:pointer">
+                <td style="padding:10px"><span style="display:inline-flex;align-items:center;gap:5px;background:var(--bg-tertiary);padding:3px 8px;border-radius:10px;font-size:10px;color:var(--text-secondary)"><span class="status-dot" style="background:var(--text-tertiary)"></span> Not Started</span></td>
+                <td style="padding:10px;color:var(--text-primary)">Set up registration page</td>
+                <td style="padding:10px"><div style="display:flex;align-items:center;gap:5px"><span style="background:#333;border-radius:50%;width:20px;height:20px;display:flex;align-items:center;justify-content:center;font-size:9px;color:var(--text-secondary)">KA</span> <span style="color:var(--text-secondary);font-size:11px">Kate</span></div></td>
+                <td style="padding:10px;color:var(--text-secondary)">Sep 6</td>
+                <td style="padding:10px;color:var(--text-secondary)">2 days</td>
+                <td style="padding:10px;color:var(--text-tertiary)">—</td>
+              </tr>
+              <!-- Sep 7 -->
+              <tr style="border-bottom:1px solid var(--border);cursor:pointer">
+                <td style="padding:10px"><span style="display:inline-flex;align-items:center;gap:5px;background:rgba(79,141,247,0.15);padding:3px 8px;border-radius:10px;font-size:10px;color:var(--accent)"><span class="status-dot" style="background:var(--accent)"></span> In Progress</span></td>
+                <td style="padding:10px;color:var(--text-primary)">Design event logo</td>
+                <td style="padding:10px"><div style="display:flex;align-items:center;gap:5px"><span style="background:#333;border-radius:50%;width:20px;height:20px;display:flex;align-items:center;justify-content:center;font-size:9px;color:var(--text-secondary)">JD</span> <span style="color:var(--text-secondary);font-size:11px">John</span></div></td>
+                <td style="padding:10px;color:var(--text-secondary)">Sep 7</td>
+                <td style="padding:10px;color:var(--text-secondary)">3 days</td>
+                <td style="padding:10px;color:var(--text-tertiary)">—</td>
+              </tr>
+              <!-- Sep 8 -->
+              <tr style="border-bottom:1px solid var(--border);cursor:pointer">
+                <td style="padding:10px"><span style="display:inline-flex;align-items:center;gap:5px;background:rgba(79,141,247,0.15);padding:3px 8px;border-radius:10px;font-size:10px;color:var(--accent)"><span class="status-dot" style="background:var(--accent)"></span> In Progress</span></td>
+                <td style="padding:10px;color:var(--text-primary)">Prepare registration form</td>
+                <td style="padding:10px"><div style="display:flex;align-items:center;gap:5px"><span style="background:#333;border-radius:50%;width:20px;height:20px;display:flex;align-items:center;justify-content:center;font-size:9px;color:var(--text-secondary)">SA</span> <span style="color:var(--text-secondary);font-size:11px">Sara</span></div></td>
+                <td style="padding:10px;color:var(--text-secondary)">Sep 8</td>
+                <td style="padding:10px;color:var(--text-secondary)">4 days</td>
+                <td style="padding:10px;color:var(--accent);font-size:11px">↳ Set up registration page</td>
+              </tr>
+              <!-- Sep 9 -->
+              <tr style="border-bottom:1px solid var(--border);cursor:pointer">
+                <td style="padding:10px"><span style="display:inline-flex;align-items:center;gap:5px;background:var(--bg-tertiary);padding:3px 8px;border-radius:10px;font-size:10px;color:var(--text-secondary)"><span class="status-dot" style="background:var(--text-tertiary)"></span> Not Started</span></td>
+                <td style="padding:10px;color:var(--text-primary)">Order prizes</td>
+                <td style="padding:10px"><div style="display:flex;align-items:center;gap:5px"><span style="background:#333;border-radius:50%;width:20px;height:20px;display:flex;align-items:center;justify-content:center;font-size:9px;color:var(--text-secondary)">JD</span> <span style="color:var(--text-secondary);font-size:11px">John</span></div></td>
+                <td style="padding:10px;color:var(--text-secondary)">Sep 9</td>
+                <td style="padding:10px;color:var(--text-secondary)">5 days</td>
+                <td style="padding:10px;color:var(--text-tertiary)">—</td>
+              </tr>
+              <!-- Sep 11 -->
+              <tr style="cursor:pointer">
+                <td style="padding:10px"><span style="display:inline-flex;align-items:center;gap:5px;background:var(--bg-tertiary);padding:3px 8px;border-radius:10px;font-size:10px;color:var(--text-secondary)"><span class="status-dot" style="background:var(--text-tertiary)"></span> Not Started</span></td>
+                <td style="padding:10px;color:var(--text-primary)">Book venue</td>
+                <td style="padding:10px"><div style="display:flex;align-items:center;gap:5px"><span style="background:#333;border-radius:50%;width:20px;height:20px;display:flex;align-items:center;justify-content:center;font-size:9px;color:var(--text-secondary)">SA</span> <span style="color:var(--text-secondary);font-size:11px">Sara</span></div></td>
+                <td style="padding:10px;color:var(--text-secondary)">Sep 11</td>
+                <td style="padding:10px;color:var(--text-secondary)">7 days</td>
+                <td style="padding:10px;color:var(--warning);font-size:11px">⚠ Confirm budget</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="options">
+  <div class="option" data-choice="good" onclick="toggleSelect(this)">
+    <div class="letter">✓</div>
+    <div class="content"><h3>Looks good</h3><p>Move on to the Todo Detail wireframe</p></div>
+  </div>
+  <div class="option" data-choice="adjust" onclick="toggleSelect(this)">
+    <div class="letter">✎</div>
+    <div class="content"><h3>Needs changes</h3><p>I'll describe what to adjust</p></div>
+  </div>
+</div>
+
+</div></div>
+<div class="indicator-bar"><span id="indicator-text">Click an option above, then return to the terminal</span></div>
+</body></html>

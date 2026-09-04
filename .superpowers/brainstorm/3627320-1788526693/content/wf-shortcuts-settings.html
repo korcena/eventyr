@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; overflow: hidden; }
+  :root {
+    --bg-primary: #0D0D0D; --bg-secondary: #161616; --bg-tertiary: #1E1E1E;
+    --bg-card: #1A1A1A; --border: #2A2A2A; --border-light: #333;
+    --text-primary: #F5F5F7; --text-secondary: #999; --text-tertiary: #666;
+    --accent: #4F8DF7; --success: #22C55E; --warning: #F59E0B;
+    --error: #EF4444; --purple: #7C3AED;
+  }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif; background: var(--bg-primary); color: var(--text-primary); display: flex; flex-direction: column; line-height: 1.5; }
+  .header { background: var(--bg-secondary); padding: 0.5rem 1.5rem; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border); flex-shrink: 0; }
+  .header h1 { font-size: 0.8rem; font-weight: 500; color: var(--text-secondary); }
+  .header .status { font-size: 0.7rem; color: var(--success); display: flex; align-items: center; gap: 0.4rem; }
+  .header .status::before { content: ''; width: 6px; height: 6px; background: var(--success); border-radius: 50%; }
+  .main { flex: 1; overflow-y: auto; }
+  #claude-content { padding: 2rem; min-height: 100%; }
+  .indicator-bar { background: var(--bg-secondary); border-top: 1px solid var(--border); padding: 0.5rem 1.5rem; flex-shrink: 0; text-align: center; }
+  .indicator-bar span { font-size: 0.75rem; color: var(--text-secondary); }
+  h2 { font-size: 1.5rem; font-weight: 600; margin-bottom: 0.5rem; }
+  h3 { font-size: 1.1rem; font-weight: 600; margin-bottom: 0.25rem; }
+  .subtitle { color: var(--text-secondary); margin-bottom: 1.5rem; }
+  .label { font-size: 0.7rem; color: var(--text-tertiary); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.5rem; }
+  .options { display: flex; flex-direction: column; gap: 0.75rem; margin-top: 1rem; }
+  .option { background: var(--bg-secondary); border: 2px solid var(--border); border-radius: 10px; padding: 1rem 1.25rem; cursor: pointer; transition: all 0.15s ease; display: flex; align-items: flex-start; gap: 1rem; }
+  .option:hover { border-color: var(--accent); }
+  .option.selected { background: rgba(79, 141, 247, 0.1); border-color: var(--accent); }
+  .option .letter { background: var(--bg-tertiary); color: var(--text-secondary); width: 1.75rem; height: 1.75rem; border-radius: 6px; display: flex; align-items: center; justify-content: center; font-weight: 600; font-size: 0.85rem; flex-shrink: 0; }
+  .option.selected .letter { background: var(--accent); color: white; }
+  .option .content { flex: 1; }
+  .option .content h3 { font-size: 0.95rem; margin-bottom: 0.15rem; }
+  .option .content p { color: var(--text-secondary); font-size: 0.85rem; margin: 0; }
+  .mockup { background: var(--bg-secondary); border: 1px solid var(--border); border-radius: 10px; overflow: hidden; margin-bottom: 1.5rem; }
+  .mockup-header { background: var(--bg-tertiary); padding: 0.5rem 1rem; font-size: 0.75rem; color: var(--text-secondary); border-bottom: 1px solid var(--border); }
+  .mockup-body { padding: 0; }
+  .mock-button { background: var(--accent); color: white; border: none; padding: 0.35rem 0.8rem; border-radius: 6px; font-size: 0.8rem; cursor: pointer; }
+  .mock-button-ghost { background: transparent; color: var(--text-secondary); border: 1px solid var(--border); padding: 0.35rem 0.8rem; border-radius: 6px; font-size: 0.8rem; cursor: pointer; }
+  .mock-button-danger { background: transparent; color: var(--error); border: 1px solid var(--error); padding: 0.35rem 0.8rem; border-radius: 6px; font-size: 0.8rem; cursor: pointer; }
+  .badge { padding: 2px 8px; border-radius: 10px; font-size: 10px; }
+  .field-label { font-size: 0.7rem; color: var(--text-tertiary); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 4px; }
+  .input-mock { background: var(--bg-tertiary); border: 1px solid var(--border); border-radius: 6px; padding: 6px 10px; color: var(--text-primary); font-size: 12px; width: 100%; }
+  .shortcut-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 8px; padding: 14px; display: flex; align-items: center; gap: 12px; transition: all 0.15s; cursor: pointer; }
+  .shortcut-card:hover { border-color: var(--accent); }
+  .status-dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; }
+  .perm-toggle { width: 32px; height: 18px; border-radius: 9px; background: var(--bg-tertiary); border: 1px solid var(--border); position: relative; cursor: pointer; }
+  .perm-toggle.on { background: var(--accent); border-color: var(--accent); }
+  .perm-toggle::after { content: ''; position: absolute; width: 12px; height: 12px; border-radius: 50%; background: var(--text-secondary); top: 2px; left: 2px; transition: all 0.15s; }
+  .perm-toggle.on::after { left: 16px; background: white; }
+</style>
+</head>
+<body>
+<div class="header"><h1>Eventyr Wireframes</h1><div class="status">Dark Mode</div></div>
+<div class="main"><div id="claude-content">
+
+<h2>Wireframe 5 — Shortcuts Tab</h2>
+<p class="subtitle">Grid of external links. Each card has favicon, label, URL. Add/edit/delete via modal.</p>
+
+<div class="mockup">
+  <div class="mockup-header">Shortcuts Tab</div>
+  <div class="mockup-body">
+    <div style="display:flex;height:360px;font-size:13px">
+
+      <!-- Sidebar -->
+      <div style="width:200px;border-right:1px solid var(--border);background:var(--bg-secondary);padding:12px 10px;display:flex;flex-direction:column;gap:4px">
+        <div style="font-weight:700;font-size:15px;margin-bottom:8px;color:var(--text-primary);display:flex;align-items:center;gap:6px">
+          <span style="background:var(--accent);color:#fff;width:22px;height:22px;border-radius:5px;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800">E</span>
+          Eventyr
+        </div>
+        <div class="label" style="margin-top:8px">Your Events</div>
+        <div style="background:var(--bg-tertiary);color:var(--text-primary);padding:6px 8px;border-radius:6px;font-weight:500">Hackathon 2026</div>
+        <div style="color:var(--text-secondary);padding:6px 8px;border-radius:6px">Rust Workshop</div>
+      </div>
+
+      <!-- Main area -->
+      <div style="flex:1;display:flex;flex-direction:column">
+        <div style="border-bottom:1px solid var(--border);padding:0 16px">
+          <div style="padding:8px 0"><span style="font-weight:600;color:var(--text-primary);font-size:14px">Hackathon 2026</span></div>
+          <div style="display:flex;gap:0">
+            <div style="padding:8px 14px;color:var(--text-tertiary)">Overview</div>
+            <div style="padding:8px 14px;color:var(--text-tertiary)">Todos</div>
+            <div style="padding:8px 14px;color:var(--text-tertiary)">Pages</div>
+            <div style="padding:8px 14px;border-bottom:2px solid var(--accent);color:var(--text-primary);font-weight:500">Shortcuts</div>
+            <div style="padding:8px 14px;color:var(--text-tertiary)">Settings</div>
+          </div>
+        </div>
+
+        <!-- Shortcuts grid -->
+        <div style="flex:1;overflow:auto;padding:16px">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
+            <span style="color:var(--text-secondary);font-size:12px">6 shortcuts</span>
+            <button class="mock-button">+ Add Shortcut</button>
+          </div>
+          <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px">
+            <div class="shortcut-card">
+              <div style="width:32px;height:32px;border-radius:6px;background:#1E3A5F;display:flex;align-items:center;justify-content:center;font-size:16px">📝</div>
+              <div style="flex:1;min-width:0">
+                <div style="color:var(--text-primary);font-size:12px;font-weight:600">Registration Form</div>
+                <div style="color:var(--text-tertiary);font-size:10px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">forms.google.com/reg...</div>
+              </div>
+            </div>
+            <div class="shortcut-card">
+              <div style="width:32px;height:32px;border-radius:6px;background:#1A1A1A;display:flex;align-items:center;justify-content:center;font-size:16px">🐙</div>
+              <div style="flex:1;min-width:0">
+                <div style="color:var(--text-primary);font-size:12px;font-weight:600">GitHub Repo</div>
+                <div style="color:var(--text-tertiary);font-size:10px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">github.com/eventyr/h...</div>
+              </div>
+            </div>
+            <div class="shortcut-card">
+              <div style="width:32px;height:32px;border-radius:6px;background:#2A1A3E;display:flex;align-items:center;justify-content:center;font-size:16px">💬</div>
+              <div style="flex:1;min-width:0">
+                <div style="color:var(--text-primary);font-size:12px;font-weight:600">Slack Channel</div>
+                <div style="color:var(--text-tertiary);font-size:10px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">slack.com/T-hack26...</div>
+              </div>
+            </div>
+            <div class="shortcut-card">
+              <div style="width:32px;height:32px;border-radius:6px;background:#3A1A1A;display:flex;align-items:center;justify-content:center;font-size:16px">📊</div>
+              <div style="flex:1;min-width:0">
+                <div style="color:var(--text-primary);font-size:12px;font-weight:600">Dashboard</div>
+                <div style="color:var(--text-tertiary);font-size:10px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">metabase.eventyr.io</div>
+              </div>
+            </div>
+            <div class="shortcut-card">
+              <div style="width:32px;height:32px;border-radius:6px;background:#1A2A1E;display:flex;align-items:center;justify-content:center;font-size:16px">🎨</div>
+              <div style="flex:1;min-width:0">
+                <div style="color:var(--text-primary);font-size:12px;font-weight:600">Figma Designs</div>
+                <div style="color:var(--text-tertiary);font-size:10px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">figma.com/file/hack...</div>
+              </div>
+            </div>
+            <div class="shortcut-card">
+              <div style="width:32px;height:32px;border-radius:6px;background:#1E1A3A;display:flex;align-items:center;justify-content:center;font-size:16px">📞</div>
+              <div style="flex:1;min-width:0">
+                <div style="color:var(--text-primary);font-size:12px;font-weight:600">Discord Server</div>
+                <div style="color:var(--text-tertiary);font-size:10px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">discord.gg/eventyr...</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<h2>Wireframe 6 — Settings Tab</h2>
+<p class="subtitle">Event settings: general info, Telegram config, roles manager, members, invite link, danger zone.</p>
+
+<div class="mockup">
+  <div class="mockup-header">Settings Tab</div>
+  <div class="mockup-body">
+    <div style="display:flex;height:560px;font-size:13px">
+
+      <!-- Sidebar -->
+      <div style="width:200px;border-right:1px solid var(--border);background:var(--bg-secondary);padding:12px 10px;display:flex;flex-direction:column;gap:4px">
+        <div style="font-weight:700;font-size:15px;margin-bottom:8px;color:var(--text-primary);display:flex;align-items:center;gap:6px">
+          <span style="background:var(--accent);color:#fff;width:22px;height:22px;border-radius:5px;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800">E</span>
+          Eventyr
+        </div>
+        <div class="label" style="margin-top:8px">Your Events</div>
+        <div style="background:var(--bg-tertiary);color:var(--text-primary);padding:6px 8px;border-radius:6px;font-weight:500">Hackathon 2026</div>
+      </div>
+
+      <!-- Main area -->
+      <div style="flex:1;display:flex;flex-direction:column">
+        <div style="border-bottom:1px solid var(--border);padding:0 16px">
+          <div style="padding:8px 0"><span style="font-weight:600;color:var(--text-primary);font-size:14px">Hackathon 2026</span></div>
+          <div style="display:flex;gap:0">
+            <div style="padding:8px 14px;color:var(--text-tertiary)">Overview</div>
+            <div style="padding:8px 14px;color:var(--text-tertiary)">Todos</div>
+            <div style="padding:8px 14px;color:var(--text-tertiary)">Pages</div>
+            <div style="padding:8px 14px;color:var(--text-tertiary)">Shortcuts</div>
+            <div style="padding:8px 14px;border-bottom:2px solid var(--accent);color:var(--text-primary);font-weight:500">Settings</div>
+          </div>
+        </div>
+
+        <!-- Settings sections -->
+        <div style="flex:1;overflow:auto;padding:16px;display:flex;flex-direction:column;gap:14px">
+
+          <!-- General -->
+          <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:8px;padding:16px">
+            <div style="font-weight:600;color:var(--text-primary);font-size:14px;margin-bottom:12px">General</div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+              <div><div class="field-label">Event Name</div><input class="input-mock" value="Hackathon 2026"/></div>
+              <div><div class="field-label">Type</div>
+                <select class="input-mock"><option>Hackathon</option><option>Workshop</option><option>Social</option><option>Other</option></select>
+              </div>
+              <div><div class="field-label">Start Date</div><input class="input-mock" value="Sep 20, 2026"/></div>
+              <div><div class="field-label">End Date</div><input class="input-mock" value="Sep 22, 2026"/></div>
+              <div style="grid-column:span 2"><div class="field-label">Description</div><textarea class="input-mock" rows="2">A 48-hour hackathon for builders.</textarea></div>
+            </div>
+            <div style="margin-top:10px;display:flex;justify-content:flex-end"><button class="mock-button">Save Changes</button></div>
+          </div>
+
+          <!-- Telegram -->
+          <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:8px;padding:16px">
+            <div style="font-weight:600;color:var(--text-primary);font-size:14px;margin-bottom:4px">Telegram Reminders</div>
+            <div style="color:var(--text-tertiary);font-size:11px;margin-bottom:12px">Configure bot to send reminders 3 and 1 day before due dates.</div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+              <div><div class="field-label">Bot Token</div><input class="input-mock" type="password" value="••••••••••••••••"/></div>
+              <div><div class="field-label">Chat ID</div><input class="input-mock" value="-1001234567890"/></div>
+            </div>
+            <div style="margin-top:10px;display:flex;gap:8px"><button class="mock-button">Save</button><button class="mock-button-ghost">Send Test Message</button></div>
+          </div>
+
+          <!-- Roles -->
+          <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:8px;padding:16px">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+              <div style="font-weight:600;color:var(--text-primary);font-size:14px">Roles & Permissions</div>
+              <button class="mock-button-ghost" style="font-size:11px">+ New Role</button>
+            </div>
+            <table style="width:100%;border-collapse:collapse;font-size:11px">
+              <thead>
+                <tr style="border-bottom:1px solid var(--border)">
+                  <th style="text-align:left;padding:6px 8px;color:var(--text-tertiary);font-size:10px;text-transform:uppercase">Role</th>
+                  <th style="text-align:center;padding:6px 4px;color:var(--text-tertiary);font-size:10px">Create Todo</th>
+                  <th style="text-align:center;padding:6px 4px;color:var(--text-tertiary);font-size:10px">Delete Todo</th>
+                  <th style="text-align:center;padding:6px 4px;color:var(--text-tertiary);font-size:10px">Manage Members</th>
+                  <th style="text-align:center;padding:6px 4px;color:var(--text-tertiary);font-size:10px">Edit Pages</th>
+                  <th style="text-align:center;padding:6px 4px;color:var(--text-tertiary);font-size:10px">Edit Event</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr style="border-bottom:1px solid var(--border)">
+                  <td style="padding:8px;color:var(--text-primary);font-weight:600">Owner</td>
+                  <td style="text-align:center;padding:8px"><div class="perm-toggle on" style="display:inline-block"></div></td>
+                  <td style="text-align:center;padding:8px"><div class="perm-toggle on" style="display:inline-block"></div></td>
+                  <td style="text-align:center;padding:8px"><div class="perm-toggle on" style="display:inline-block"></div></td>
+                  <td style="text-align:center;padding:8px"><div class="perm-toggle on" style="display:inline-block"></div></td>
+                  <td style="text-align:center;padding:8px"><div class="perm-toggle on" style="display:inline-block"></div></td>
+                </tr>
+                <tr style="border-bottom:1px solid var(--border)">
+                  <td style="padding:8px;color:var(--text-primary)">Organizer</td>
+                  <td style="text-align:center;padding:8px"><div class="perm-toggle on" style="display:inline-block"></div></td>
+                  <td style="text-align:center;padding:8px"><div class="perm-toggle on" style="display:inline-block"></div></td>
+                  <td style="text-align:center;padding:8px"><div class="perm-toggle" style="display:inline-block"></div></td>
+                  <td style="text-align:center;padding:8px"><div class="perm-toggle on" style="display:inline-block"></div></td>
+                  <td style="text-align:center;padding:8px"><div class="perm-toggle" style="display:inline-block"></div></td>
+                </tr>
+                <tr>
+                  <td style="padding:8px;color:var(--text-primary)">Volunteer</td>
+                  <td style="text-align:center;padding:8px"><div class="perm-toggle on" style="display:inline-block"></div></td>
+                  <td style="text-align:center;padding:8px"><div class="perm-toggle" style="display:inline-block"></div></td>
+                  <td style="text-align:center;padding:8px"><div class="perm-toggle" style="display:inline-block"></div></td>
+                  <td style="text-align:center;padding:8px"><div class="perm-toggle" style="display:inline-block"></div></td>
+                  <td style="text-align:center;padding:8px"><div class="perm-toggle" style="display:inline-block"></div></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <!-- Members + Invite -->
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
+            <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:8px;padding:16px">
+              <div style="font-weight:600;color:var(--text-primary);font-size:14px;margin-bottom:12px">Members (6)</div>
+              <div style="display:flex;flex-direction:column;gap:8px">
+                <div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid var(--border)">
+                  <span style="background:#333;border-radius:50%;width:24px;height:24px;display:flex;align-items:center;justify-content:center;font-size:9px;color:var(--text-secondary)">KA</span>
+                  <span style="flex:1;color:var(--text-primary);font-size:12px">Kate</span>
+                  <span class="badge" style="background:rgba(79,141,247,0.15);color:var(--accent)">Owner</span>
+                </div>
+                <div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid var(--border)">
+                  <span style="background:#333;border-radius:50%;width:24px;height:24px;display:flex;align-items:center;justify-content:center;font-size:9px;color:var(--text-secondary)">JD</span>
+                  <span style="flex:1;color:var(--text-primary);font-size:12px">John</span>
+                  <select style="background:var(--bg-tertiary);border:1px solid var(--border);color:var(--text-secondary);font-size:10px;padding:2px 4px;border-radius:4px"><option>Organizer</option><option>Volunteer</option></select>
+                </div>
+                <div style="display:flex;align-items:center;gap:8px;padding:6px 0">
+                  <span style="background:#333;border-radius:50%;width:24px;height:24px;display:flex;align-items:center;justify-content:center;font-size:9px;color:var(--text-secondary)">SA</span>
+                  <span style="flex:1;color:var(--text-primary);font-size:12px">Sara</span>
+                  <select style="background:var(--bg-tertiary);border:1px solid var(--border);color:var(--text-secondary);font-size:10px;padding:2px 4px;border-radius:4px"><option>Volunteer</option><option>Organizer</option></select>
+                </div>
+              </div>
+            </div>
+            <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:8px;padding:16px">
+              <div style="font-weight:600;color:var(--text-primary);font-size:14px;margin-bottom:12px">Invite Link</div>
+              <div style="background:var(--bg-tertiary);border:1px solid var(--border);border-radius:6px;padding:8px 10px;font-size:11px;color:var(--text-secondary);word-break:break-all;margin-bottom:8px">https://eventyr.app/invite/abc123xyz789</div>
+              <div style="display:flex;gap:8px;margin-bottom:10px">
+                <button class="mock-button-ghost" style="font-size:11px">Copy Link</button>
+                <button class="mock-button-ghost" style="font-size:11px">Regenerate</button>
+              </div>
+              <div class="field-label" style="margin-top:8px">Default Role for New Members</div>
+              <select class="input-mock" style="margin-top:2px"><option>Volunteer</option><option>Organizer</option></select>
+            </div>
+          </div>
+
+          <!-- Danger zone -->
+          <div style="background:var(--bg-card);border:1px solid var(--error);border-radius:8px;padding:16px">
+            <div style="font-weight:600;color:var(--error);font-size:14px;margin-bottom:6px">Danger Zone</div>
+            <div style="color:var(--text-tertiary);font-size:11px;margin-bottom:10px">Deleting an event permanently removes all todos, pages, and data. This cannot be undone.</div>
+            <button class="mock-button-danger">Delete Event</button>
+          </div>
+
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="options">
+  <div class="option" data-choice="good" onclick="toggleSelect(this)">
+    <div class="letter">✓</div>
+    <div class="content"><h3>Looks good</h3><p>Move on to the AI Chat wireframe</p></div>
+  </div>
+  <div class="option" data-choice="adjust" onclick="toggleSelect(this)">
+    <div class="letter">✎</div>
+    <div class="content"><h3>Needs changes</h3><p>I'll describe what to adjust</p></div>
+  </div>
+</div>
+
+</div></div>
+<div class="indicator-bar"><span id="indicator-text">Click an option above, then return to the terminal</span></div>
+</body></html>

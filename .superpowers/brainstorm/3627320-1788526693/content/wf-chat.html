@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; overflow: hidden; }
+  :root {
+    --bg-primary: #0D0D0D; --bg-secondary: #161616; --bg-tertiary: #1E1E1E;
+    --bg-card: #1A1A1A; --border: #2A2A2A; --border-light: #333;
+    --text-primary: #F5F5F7; --text-secondary: #999; --text-tertiary: #666;
+    --accent: #4F8DF7; --success: #22C55E; --warning: #F59E0B;
+    --error: #EF4444; --purple: #7C3AED;
+  }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif; background: var(--bg-primary); color: var(--text-primary); display: flex; flex-direction: column; line-height: 1.5; }
+  .header { background: var(--bg-secondary); padding: 0.5rem 1.5rem; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border); flex-shrink: 0; }
+  .header h1 { font-size: 0.8rem; font-weight: 500; color: var(--text-secondary); }
+  .header .status { font-size: 0.7rem; color: var(--success); display: flex; align-items: center; gap: 0.4rem; }
+  .header .status::before { content: ''; width: 6px; height: 6px; background: var(--success); border-radius: 50%; }
+  .main { flex: 1; overflow-y: auto; }
+  #claude-content { padding: 2rem; min-height: 100%; }
+  .indicator-bar { background: var(--bg-secondary); border-top: 1px solid var(--border); padding: 0.5rem 1.5rem; flex-shrink: 0; text-align: center; }
+  .indicator-bar span { font-size: 0.75rem; color: var(--text-secondary); }
+  h2 { font-size: 1.5rem; font-weight: 600; margin-bottom: 0.5rem; }
+  h3 { font-size: 1.1rem; font-weight: 600; margin-bottom: 0.25rem; }
+  .subtitle { color: var(--text-secondary); margin-bottom: 1.5rem; }
+  .label { font-size: 0.7rem; color: var(--text-tertiary); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.5rem; }
+  .options { display: flex; flex-direction: column; gap: 0.75rem; margin-top: 1rem; }
+  .option { background: var(--bg-secondary); border: 2px solid var(--border); border-radius: 10px; padding: 1rem 1.25rem; cursor: pointer; transition: all 0.15s ease; display: flex; align-items: flex-start; gap: 1rem; }
+  .option:hover { border-color: var(--accent); }
+  .option.selected { background: rgba(79, 141, 247, 0.1); border-color: var(--accent); }
+  .option .letter { background: var(--bg-tertiary); color: var(--text-secondary); width: 1.75rem; height: 1.75rem; border-radius: 6px; display: flex; align-items: center; justify-content: center; font-weight: 600; font-size: 0.85rem; flex-shrink: 0; }
+  .option.selected .letter { background: var(--accent); color: white; }
+  .option .content { flex: 1; }
+  .option .content h3 { font-size: 0.95rem; margin-bottom: 0.15rem; }
+  .option .content p { color: var(--text-secondary); font-size: 0.85rem; margin: 0; }
+  .mockup { background: var(--bg-secondary); border: 1px solid var(--border); border-radius: 10px; overflow: hidden; margin-bottom: 1.5rem; }
+  .mockup-header { background: var(--bg-tertiary); padding: 0.5rem 1rem; font-size: 0.75rem; color: var(--text-secondary); border-bottom: 1px solid var(--border); }
+  .mockup-body { padding: 0; }
+  .mock-button { background: var(--accent); color: white; border: none; padding: 0.35rem 0.8rem; border-radius: 6px; font-size: 0.8rem; cursor: pointer; }
+  .mock-button-ghost { background: transparent; color: var(--text-secondary); border: 1px solid var(--border); padding: 0.35rem 0.8rem; border-radius: 6px; font-size: 0.8rem; cursor: pointer; }
+  .badge { padding: 2px 8px; border-radius: 10px; font-size: 10px; }
+  .field-label { font-size: 0.7rem; color: var(--text-tertiary); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 4px; }
+  .input-mock { background: var(--bg-tertiary); border: 1px solid var(--border); border-radius: 6px; padding: 6px 10px; color: var(--text-primary); font-size: 12px; width: 100%; }
+  .status-dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; }
+  .chat-msg { display: flex; gap: 10px; margin-bottom: 16px; }
+  .chat-avatar { width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 10px; flex-shrink: 0; }
+  .chat-bubble { background: var(--bg-tertiary); border-radius: 10px; padding: 10px 14px; font-size: 12px; line-height: 1.6; color: var(--text-secondary); }
+  .chat-bubble.user { background: rgba(79,141,247,0.15); color: var(--text-primary); }
+  .citation { display: inline-flex; align-items: center; gap: 4px; background: var(--bg-card); border: 1px solid var(--border); border-radius: 4px; padding: 2px 6px; font-size: 10px; color: var(--accent); margin: 2px 2px 0 0; cursor: pointer; }
+  .suggestion-chip { background: var(--bg-tertiary); border: 1px solid var(--border); border-radius: 14px; padding: 5px 12px; font-size: 11px; color: var(--text-secondary); cursor: pointer; }
+  .suggestion-chip:hover { border-color: var(--accent); color: var(--accent); }
+</style>
+</head>
+<body>
+<div class="header"><h1>Eventyr Wireframes</h1><div class="status">Dark Mode</div></div>
+<div class="main"><div id="claude-content">
+
+<h2>Wireframe 7 — AI Chat</h2>
+<p class="subtitle">Chat interface to ask questions about event data. RAG-powered with source citations. Event selector to scope queries.</p>
+
+<div class="mockup">
+  <div class="mockup-header">AI Chat — Ask About Event Data</div>
+  <div class="mockup-body">
+    <div style="display:flex;height:560px;font-size:13px">
+
+      <!-- Sidebar -->
+      <div style="width:200px;border-right:1px solid var(--border);background:var(--bg-secondary);padding:12px 10px;display:flex;flex-direction:column;gap:4px">
+        <div style="font-weight:700;font-size:15px;margin-bottom:8px;color:var(--text-primary);display:flex;align-items:center;gap:6px">
+          <span style="background:var(--accent);color:#fff;width:22px;height:22px;border-radius:5px;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800">E</span>
+          Eventyr
+        </div>
+        <div class="label" style="margin-top:8px">Your Events</div>
+        <div style="background:var(--bg-tertiary);color:var(--text-primary);padding:6px 8px;border-radius:6px;font-weight:500">Hackathon 2026</div>
+        <div style="color:var(--text-secondary);padding:6px 8px;border-radius:6px">Rust Workshop</div>
+        <div style="color:var(--text-secondary);padding:6px 8px;border-radius:6px">Tech Socials Q4</div>
+
+        <div style="margin-top:auto;padding:8px;border-top:1px solid var(--border)">
+          <div style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--accent);font-weight:500">
+            <span>💬</span> AI Chat
+          </div>
+        </div>
+      </div>
+
+      <!-- Chat area -->
+      <div style="flex:1;display:flex;flex-direction:column">
+
+        <!-- Chat header -->
+        <div style="border-bottom:1px solid var(--border);padding:10px 16px;display:flex;align-items:center;justify-content:space-between">
+          <div style="display:flex;align-items:center;gap:10px">
+            <div style="width:28px;height:28px;border-radius:6px;background:linear-gradient(135deg,#4F8DF7,#7C3AED);display:flex;align-items:center;justify-content:center;font-size:14px">✨</div>
+            <div>
+              <div style="font-weight:600;color:var(--text-primary);font-size:13px">Eventyr AI</div>
+              <div style="color:var(--text-tertiary);font-size:10px">Ask anything about your events</div>
+            </div>
+          </div>
+          <div style="display:flex;align-items:center;gap:8px">
+            <select style="background:var(--bg-tertiary);border:1px solid var(--border);color:var(--text-secondary);padding:4px 8px;border-radius:6px;font-size:11px">
+              <option>All Events</option>
+              <option>Hackathon 2026</option>
+              <option>Rust Workshop</option>
+            </select>
+            <button class="mock-button-ghost" style="font-size:11px">↺ Reset Chat</button>
+          </div>
+        </div>
+
+        <!-- Messages -->
+        <div style="flex:1;overflow:auto;padding:16px">
+
+          <!-- User message -->
+          <div class="chat-msg" style="justify-content:flex-end">
+            <div class="chat-bubble user" style="max-width:70%">
+              What are the prizes for the hackathon and who are the organizers?
+            </div>
+            <div class="chat-avatar" style="background:#333;color:var(--text-secondary)">KA</div>
+          </div>
+
+          <!-- AI response -->
+          <div class="chat-msg">
+            <div class="chat-avatar" style="background:linear-gradient(135deg,#4F8DF7,#7C3AED);color:white">✨</div>
+            <div style="flex:1;max-width:80%">
+              <div class="chat-bubble">
+                <div style="color:var(--text-primary);margin-bottom:8px">Here's what I found for Hackathon 2026:</div>
+                <div style="color:var(--text-primary);font-weight:600;font-size:11px;margin-bottom:4px">Prizes</div>
+                <div style="margin-bottom:6px">
+                  • <span style="color:var(--text-primary)">1st Place:</span> $500 + GitHub Swag Pack (Sponsor: GitHub)<br/>
+                  • <span style="color:var(--text-primary)">2nd Place:</span> $300 + Notion Pro 1yr (Sponsor: Notion)<br/>
+                  • <span style="color:var(--text-primary)">3rd Place:</span> $150 + Render Credits (Sponsor: Render)<br/>
+                  • <span style="color:var(--text-primary)">Best UI:</span> Figma Pro 6mo (Sponsor: Figma)
+                </div>
+                <div style="color:var(--text-primary);font-weight:600;font-size:11px;margin:8px 0 4px">Organizers</div>
+                <div style="margin-bottom:8px">
+                  • <span style="color:var(--text-primary)">Kate Arif</span> — Lead Organizer (kate@example.com)<br/>
+                  • <span style="color:var(--text-primary)">John Doe</span> — Logistics (john@example.com)<br/>
+                  • <span style="color:var(--text-primary)">Sara Ali</span> — Marketing (sara@example.com)
+                </div>
+              </div>
+              <!-- Citations -->
+              <div style="margin-top:6px;display:flex;flex-wrap:wrap;align-items:center;gap:4px">
+                <span style="color:var(--text-tertiary);font-size:10px">Sources:</span>
+                <span class="citation">📄 Prize List</span>
+                <span class="citation">📄 Organizer List</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- User message 2 -->
+          <div class="chat-msg" style="justify-content:flex-end">
+            <div class="chat-bubble user" style="max-width:70%">
+              Which tasks are overdue and who are they assigned to?
+            </div>
+            <div class="chat-avatar" style="background:#333;color:var(--text-secondary)">KA</div>
+          </div>
+
+          <!-- AI response 2 -->
+          <div class="chat-msg">
+            <div class="chat-avatar" style="background:linear-gradient(135deg,#4F8DF7,#7C3AED);color:white">✨</div>
+            <div style="flex:1;max-width:80%">
+              <div class="chat-bubble">
+                <div style="color:var(--text-primary);margin-bottom:8px">There are <span style="color:var(--error);font-weight:600">3 overdue tasks</span> in Hackathon 2026:</div>
+                <div style="margin-bottom:4px">
+                  • <span style="color:var(--text-primary)">Confirm budget</span> — 1 day overdue, assigned to <span style="color:var(--accent)">Kate</span> (In Progress)<br/>
+                  • <span style="color:var(--text-primary)">Order catering</span> — 2 days overdue, assigned to <span style="color:var(--accent)">John</span> (Blocked by "Confirm budget")<br/>
+                  • <span style="color:var(--text-primary)">Send out invites</span> — 5 days overdue, assigned to <span style="color:var(--accent)">Sara</span> (Blocked by "Set up registration page")
+                </div>
+                <div style="color:var(--text-tertiary);font-size:11px;margin-top:6px">"Order catering" and "Send out invites" are both blocked. Resolving "Confirm budget" and "Set up registration page" will unblock them.</div>
+              </div>
+              <div style="margin-top:6px;display:flex;flex-wrap:wrap;align-items:center;gap:4px">
+                <span style="color:var(--text-tertiary);font-size:10px">Sources:</span>
+                <span class="citation">✓ Todos</span>
+                <span class="citation">↳ Dependencies</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Streaming indicator -->
+          <div class="chat-msg">
+            <div class="chat-avatar" style="background:linear-gradient(135deg,#4F8DF7,#7C3AED);color:white">✨</div>
+            <div class="chat-bubble" style="display:flex;align-items:center;gap:6px">
+              <span style="color:var(--text-tertiary);font-size:12px">Thinking</span>
+              <span style="display:flex;gap:3px">
+                <span style="width:5px;height:5px;border-radius:50%;background:var(--accent);opacity:0.4"></span>
+                <span style="width:5px;height:5px;border-radius:50%;background:var(--accent);opacity:0.7"></span>
+                <span style="width:5px;height:5px;border-radius:50%;background:var(--accent);opacity:1"></span>
+              </span>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- Input -->
+        <div style="border-top:1px solid var(--border);padding:10px 16px">
+          <div style="display:flex;gap:8px;align-items:center">
+            <input class="input-mock" placeholder="Ask anything about your events..." style="flex:1;padding:8px 12px;font-size:13px"/>
+            <button class="mock-button" style="padding:8px 14px;font-size:12px">Send</button>
+          </div>
+          <div style="color:var(--text-tertiary);font-size:10px;margin-top:6px">AI answers are based on your event data. 18/20 messages remaining this hour.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="options">
+  <div class="option" data-choice="good" onclick="toggleSelect(this)">
+    <div class="letter">✓</div>
+    <div class="content"><h3>All wireframes look good</h3><p>Save them and wrap up</p></div>
+  </div>
+  <div class="option" data-choice="adjust" onclick="toggleSelect(this)">
+    <div class="letter">✎</div>
+    <div class="content"><h3>Needs changes</h3><p>I'll describe what to adjust</p></div>
+  </div>
+</div>
+
+</div></div>
+<div class="indicator-bar"><span id="indicator-text">Click an option above, then return to the terminal</span></div>
+</body></html>

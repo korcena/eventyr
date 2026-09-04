@@ -1,0 +1,93 @@
+<h2>App Layout — which feels right?</h2>
+<p class="subtitle">Main workspace layout for an event. Consider navigation, information density, and how todos/pages/shortcuts coexist.</p>
+
+<div class="options">
+  <div class="option" data-choice="a" onclick="toggleSelect(this)">
+    <div class="letter">A</div>
+    <div class="content">
+      <h3>Sidebar + Tabs (Notion-style)</h3>
+      <p>Left sidebar: list of events you're in. Right: tabs for the selected event (Overview, Todos, Pages, Shortcuts, Settings). Clean separation, one active section at a time.</p>
+      <div class="mockup" style="margin-top:12px">
+        <div class="mockup-body">
+          <div style="display:flex;height:220px">
+            <div class="mock-sidebar" style="width:140px">
+              <div class="label">Events</div>
+              <div style="margin-top:6px;font-size:12px">▸ Hackathon 2026</div>
+              <div style="font-size:12px">  Workshop: Rust</div>
+              <div style="font-size:12px">  Tech Socials</div>
+            </div>
+            <div class="mock-content" style="flex:1;padding:10px">
+              <div style="font-weight:600;margin-bottom:8px">Hackathon 2026</div>
+              <div style="display:flex;gap:8px;margin-bottom:10px;font-size:12px">
+                <span style="border-bottom:2px solid #4F8DF7;padding:2px 6px">Overview</span>
+                <span style="padding:2px 6px">Todos</span>
+                <span style="padding:2px 6px">Pages</span>
+                <span style="padding:2px 6px">Shortcuts</span>
+                <span style="padding:2px 6px">Settings</span>
+              </div>
+              <div class="placeholder" style="height:120px">Overview content</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="option" data-choice="b" onclick="toggleSelect(this)">
+    <div class="letter">B</div>
+    <div class="content">
+      <h3>Sidebar + Split Pane (Linear-style)</h3>
+      <p>Left sidebar: events + sections. Main area: split between list view (todos/pages) and detail panel on the right. Click a todo → details slide in. More info-dense, good for power users.</p>
+      <div class="mockup" style="margin-top:12px">
+        <div class="mockup-body">
+          <div style="display:flex;height:220px">
+            <div class="mock-sidebar" style="width:160px">
+              <div class="label">Hackathon 2026</div>
+              <div style="margin-top:6px;font-size:12px">▸ Todos</div>
+              <div style="font-size:12px">  Pages</div>
+              <div style="font-size:12px">  Shortcuts</div>
+              <div style="font-size:12px">  Settings</div>
+              <div style="margin-top:10px" class="label">Other Events</div>
+              <div style="font-size:12px">  Workshop: Rust</div>
+            </div>
+            <div class="mock-content" style="flex:1;padding:10px">
+              <div style="font-weight:600;margin-bottom:8px">Todos</div>
+              <div style="font-size:12px;border-bottom:1px solid #eee;padding:4px 0">Set up registration ◻ 2d</div>
+              <div style="font-size:12px;border-bottom:1px solid #eee;padding:4px 0">Order prizes ◻ 5d</div>
+              <div style="font-size:12px;padding:4px 0">Book venue ◻ 7d</div>
+            </div>
+            <div style="width:180px;border-left:1px solid #eee;padding:10px;font-size:12px">
+              <div style="font-weight:600;margin-bottom:6px">Set up registration</div>
+              <div style="color:#666">Due: Sep 6</div>
+              <div style="margin-top:6px">Assigned: Kate</div>
+              <div style="margin-top:6px" class="placeholder">Comments</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="option" data-choice="c" onclick="toggleSelect(this)">
+    <div class="letter">C</div>
+    <div class="content">
+      <h3>Top Nav + Dashboard Cards</h3>
+      <p>Top bar with event switcher dropdown. Dashboard home shows cards for each section (Todos summary, Recent pages, Shortcuts). Click a card to go full-page into that section. Most approachable, least info-dense.</p>
+      <div class="mockup" style="margin-top:12px">
+        <div class="mockup-body">
+          <div class="mock-nav">Eventyr | Hackathon 2026 ▾ | Chat | Settings</div>
+          <div style="padding:12px">
+            <div style="display:flex;gap:10px;flex-wrap:wrap">
+              <div class="placeholder" style="width:30%;height:80px">Todos: 12 open</div>
+              <div class="placeholder" style="width:30%;height:80px">Pages: 4</div>
+              <div class="placeholder" style="width:30%;height:80px">Shortcuts: 6</div>
+              <div class="placeholder" style="width:30%;height:80px">Members: 8</div>
+              <div class="placeholder" style="width:30%;height:80px">Calendar</div>
+              <div class="placeholder" style="width:30%;height:80px">Telegram</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

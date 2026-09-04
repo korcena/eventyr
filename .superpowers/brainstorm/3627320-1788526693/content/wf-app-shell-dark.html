@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; overflow: hidden; }
+  :root {
+    --bg-primary: #0D0D0D;
+    --bg-secondary: #161616;
+    --bg-tertiary: #1E1E1E;
+    --bg-card: #1A1A1A;
+    --border: #2A2A2A;
+    --border-light: #333;
+    --text-primary: #F5F5F7;
+    --text-secondary: #999;
+    --text-tertiary: #666;
+    --accent: #4F8DF7;
+    --success: #22C55E;
+    --warning: #F59E0B;
+    --error: #EF4444;
+    --purple: #7C3AED;
+  }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+    background: var(--bg-primary);
+    color: var(--text-primary);
+    display: flex;
+    flex-direction: column;
+    line-height: 1.5;
+  }
+  .header {
+    background: var(--bg-secondary);
+    padding: 0.5rem 1.5rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid var(--border);
+    flex-shrink: 0;
+  }
+  .header h1 { font-size: 0.8rem; font-weight: 500; color: var(--text-secondary); }
+  .header .status { font-size: 0.7rem; color: var(--success); display: flex; align-items: center; gap: 0.4rem; }
+  .header .status::before { content: ''; width: 6px; height: 6px; background: var(--success); border-radius: 50%; }
+  .main { flex: 1; overflow-y: auto; }
+  #claude-content { padding: 2rem; min-height: 100%; }
+  .indicator-bar {
+    background: var(--bg-secondary);
+    border-top: 1px solid var(--border);
+    padding: 0.5rem 1.5rem;
+    flex-shrink: 0;
+    text-align: center;
+  }
+  .indicator-bar span { font-size: 0.75rem; color: var(--text-secondary); }
+  h2 { font-size: 1.5rem; font-weight: 600; margin-bottom: 0.5rem; }
+  h3 { font-size: 1.1rem; font-weight: 600; margin-bottom: 0.25rem; }
+  .subtitle { color: var(--text-secondary); margin-bottom: 1.5rem; }
+  .label { font-size: 0.7rem; color: var(--text-tertiary); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.5rem; }
+  .options { display: flex; flex-direction: column; gap: 0.75rem; margin-top: 1rem; }
+  .option {
+    background: var(--bg-secondary);
+    border: 2px solid var(--border);
+    border-radius: 10px;
+    padding: 1rem 1.25rem;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    display: flex;
+    align-items: flex-start;
+    gap: 1rem;
+  }
+  .option:hover { border-color: var(--accent); }
+  .option.selected { background: rgba(79, 141, 247, 0.1); border-color: var(--accent); }
+  .option .letter {
+    background: var(--bg-tertiary);
+    color: var(--text-secondary);
+    width: 1.75rem; height: 1.75rem;
+    border-radius: 6px;
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 600; font-size: 0.85rem; flex-shrink: 0;
+  }
+  .option.selected .letter { background: var(--accent); color: white; }
+  .option .content { flex: 1; }
+  .option .content h3 { font-size: 0.95rem; margin-bottom: 0.15rem; }
+  .option .content p { color: var(--text-secondary); font-size: 0.85rem; margin: 0; }
+  .mockup {
+    background: var(--bg-secondary);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    overflow: hidden;
+    margin-bottom: 1.5rem;
+  }
+  .mockup-header {
+    background: var(--bg-tertiary);
+    padding: 0.5rem 1rem;
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+    border-bottom: 1px solid var(--border);
+  }
+  .mockup-body { padding: 0; }
+  .placeholder {
+    background: var(--bg-tertiary);
+    border: 2px dashed var(--border-light);
+    border-radius: 6px;
+    padding: 2rem;
+    text-align: center;
+    color: var(--text-tertiary);
+  }
+  .badge { padding: 2px 8px; border-radius: 10px; font-size: 10px; }
+  .mock-button { background: var(--accent); color: white; border: none; padding: 0.35rem 0.8rem; border-radius: 6px; font-size: 0.8rem; cursor: pointer; }
+</style>
+</head>
+<body>
+<div class="header">
+  <h1>Eventyr Wireframes</h1>
+  <div class="status">Dark Mode</div>
+</div>
+<div class="main">
+<div id="claude-content">
+
+<h2>Wireframe 1 — Main App Shell (Dark)</h2>
+<p class="subtitle">Sidebar (events list) + tabbed event workspace. Overview tab shown.</p>
+
+<div class="mockup">
+  <div class="mockup-header">App Shell — Event Selected</div>
+  <div class="mockup-body">
+    <div style="display:flex;height:480px;font-size:13px">
+
+      <!-- Sidebar -->
+      <div style="width:200px;border-right:1px solid var(--border);background:var(--bg-secondary);padding:12px 10px;display:flex;flex-direction:column;gap:4px">
+        <div style="font-weight:700;font-size:15px;margin-bottom:8px;color:var(--text-primary);display:flex;align-items:center;gap:6px">
+          <span style="background:var(--accent);color:#fff;width:22px;height:22px;border-radius:5px;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800">E</span>
+          Eventyr
+        </div>
+        <div class="label" style="margin-top:8px">Your Events</div>
+        <div style="background:var(--bg-tertiary);color:var(--text-primary);padding:6px 8px;border-radius:6px;font-weight:500;display:flex;align-items:center;gap:6px">
+          <span style="width:8px;height:8px;background:var(--accent);border-radius:2px"></span>
+          Hackathon 2026
+        </div>
+        <div style="color:var(--text-secondary);padding:6px 8px;border-radius:6px;display:flex;align-items:center;gap:6px">
+          <span style="width:8px;height:8px;background:var(--purple);border-radius:2px"></span>
+          Rust Workshop
+        </div>
+        <div style="color:var(--text-secondary);padding:6px 8px;border-radius:6px;display:flex;align-items:center;gap:6px">
+          <span style="width:8px;height:8px;background:var(--warning);border-radius:2px"></span>
+          Tech Socials Q4
+        </div>
+        <div style="margin-top:auto;padding:8px;border-top:1px solid var(--border);display:flex;align-items:center;gap:8px">
+          <div style="width:28px;height:28px;border-radius:50%;background:#333;display:flex;align-items:center;justify-content:center;font-size:11px;color:var(--text-secondary)">KA</div>
+          <div>
+            <div style="color:var(--text-primary);font-size:12px">Kate</div>
+            <div style="color:var(--text-tertiary);font-size:10px">kate@example.com</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Main content area -->
+      <div style="flex:1;display:flex;flex-direction:column">
+
+        <!-- Top bar -->
+        <div style="border-bottom:1px solid var(--border);padding:10px 16px;display:flex;align-items:center;justify-content:space-between">
+          <div style="display:flex;align-items:center;gap:10px">
+            <span style="font-weight:600;color:var(--text-primary);font-size:14px">Hackathon 2026</span>
+            <span class="badge" style="background:#1E3A5F;color:var(--accent)">HACKATHON</span>
+            <span style="color:var(--text-tertiary);font-size:11px">Sep 20 – Sep 22</span>
+          </div>
+          <div style="display:flex;gap:8px;align-items:center">
+            <span style="color:var(--text-tertiary);font-size:11px">6 members</span>
+            <button class="mock-button">+ Invite</button>
+          </div>
+        </div>
+
+        <!-- Tabs -->
+        <div style="border-bottom:1px solid var(--border);padding:0 16px;display:flex;gap:0">
+          <div style="padding:10px 14px;border-bottom:2px solid var(--accent);color:var(--text-primary);font-weight:500">Overview</div>
+          <div style="padding:10px 14px;color:var(--text-tertiary)">Todos <span style="background:var(--bg-tertiary);padding:1px 6px;border-radius:8px;font-size:10px">12</span></div>
+          <div style="padding:10px 14px;color:var(--text-tertiary)">Pages</div>
+          <div style="padding:10px 14px;color:var(--text-tertiary)">Shortcuts</div>
+          <div style="padding:10px 14px;color:var(--text-tertiary)">Settings</div>
+        </div>
+
+        <!-- Overview content -->
+        <div style="flex:1;padding:16px;overflow:auto">
+          <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:16px">
+            <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:8px;padding:14px">
+              <div class="label">Todo Stats</div>
+              <div style="display:flex;gap:16px;margin-top:10px">
+                <div><div style="font-size:20px;color:var(--text-primary);font-weight:700">12</div><div style="color:var(--text-tertiary);font-size:10px">Open</div></div>
+                <div><div style="font-size:20px;color:var(--warning);font-weight:700">2</div><div style="color:var(--text-tertiary);font-size:10px">Blocked</div></div>
+                <div><div style="font-size:20px;color:var(--error);font-weight:700">3</div><div style="color:var(--text-tertiary);font-size:10px">Overdue</div></div>
+                <div><div style="font-size:20px;color:var(--success);font-weight:700">8</div><div style="color:var(--text-tertiary);font-size:10px">Done</div></div>
+              </div>
+            </div>
+            <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:8px;padding:14px">
+              <div class="label">Upcoming Due</div>
+              <div style="margin-top:8px;font-size:11px;color:var(--text-secondary)">Set up registration — 2 days</div>
+              <div style="margin-top:4px;font-size:11px;color:var(--text-secondary)">Order prizes — 5 days</div>
+              <div style="margin-top:4px;font-size:11px;color:var(--text-secondary)">Book venue — 7 days</div>
+            </div>
+            <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:8px;padding:14px">
+              <div class="label">Quick Links</div>
+              <div style="margin-top:8px;font-size:11px;color:var(--accent)">Registration Form</div>
+              <div style="margin-top:4px;font-size:11px;color:var(--accent)">GitHub Repo</div>
+              <div style="margin-top:4px;font-size:11px;color:var(--accent)">Slack Channel</div>
+            </div>
+          </div>
+
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+            <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:8px;padding:14px">
+              <div class="label">Recent Pages</div>
+              <div style="margin-top:8px;font-size:12px;color:var(--text-secondary)">Organizer List</div>
+              <div style="margin-top:4px;font-size:12px;color:var(--text-secondary)">Prize List</div>
+              <div style="margin-top:4px;font-size:12px;color:var(--text-secondary)">Schedule</div>
+            </div>
+            <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:8px;padding:14px">
+              <div class="label">Members</div>
+              <div style="display:flex;gap:6px;margin-top:8px;flex-wrap:wrap">
+                <div style="display:flex;align-items:center;gap:4px;font-size:11px;color:var(--text-secondary)"><div style="width:20px;height:20px;border-radius:50%;background:#333;display:flex;align-items:center;justify-content:center;font-size:9px">KA</div> Kate</div>
+                <div style="display:flex;align-items:center;gap:4px;font-size:11px;color:var(--text-secondary)"><div style="width:20px;height:20px;border-radius:50%;background:#333;display:flex;align-items:center;justify-content:center;font-size:9px">JD</div> John</div>
+                <div style="display:flex;align-items:center;gap:4px;font-size:11px;color:var(--text-secondary)"><div style="width:20px;height:20px;border-radius:50%;background:#333;display:flex;align-items:center;justify-content:center;font-size:9px">SA</div> Sara</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="options">
+  <div class="option" data-choice="good" onclick="toggleSelect(this)">
+    <div class="letter">✓</div>
+    <div class="content"><h3>Looks good</h3><p>Move on to the Todos wireframe</p></div>
+  </div>
+  <div class="option" data-choice="adjust" onclick="toggleSelect(this)">
+    <div class="letter">✎</div>
+    <div class="content"><h3>Needs changes</h3><p>I'll describe what to adjust</p></div>
+  </div>
+</div>
+
+</div>
+</div>
+<div class="indicator-bar">
+  <span id="indicator-text">Click an option above, then return to the terminal</span>
+</div>
+</body>
+</html>

@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; overflow: hidden; }
+  :root {
+    --bg-primary: #0D0D0D; --bg-secondary: #161616; --bg-tertiary: #1E1E1E;
+    --bg-card: #1A1A1A; --border: #2A2A2A; --border-light: #333;
+    --text-primary: #F5F5F7; --text-secondary: #999; --text-tertiary: #666;
+    --accent: #4F8DF7; --success: #22C55E; --warning: #F59E0B;
+    --error: #EF4444; --purple: #7C3AED;
+  }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif; background: var(--bg-primary); color: var(--text-primary); display: flex; flex-direction: column; line-height: 1.5; }
+  .header { background: var(--bg-secondary); padding: 0.5rem 1.5rem; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border); flex-shrink: 0; }
+  .header h1 { font-size: 0.8rem; font-weight: 500; color: var(--text-secondary); }
+  .header .status { font-size: 0.7rem; color: var(--success); display: flex; align-items: center; gap: 0.4rem; }
+  .header .status::before { content: ''; width: 6px; height: 6px; background: var(--success); border-radius: 50%; }
+  .main { flex: 1; overflow-y: auto; }
+  #claude-content { padding: 2rem; min-height: 100%; }
+  .indicator-bar { background: var(--bg-secondary); border-top: 1px solid var(--border); padding: 0.5rem 1.5rem; flex-shrink: 0; text-align: center; }
+  .indicator-bar span { font-size: 0.75rem; color: var(--text-secondary); }
+  h2 { font-size: 1.5rem; font-weight: 600; margin-bottom: 0.5rem; }
+  h3 { font-size: 1.1rem; font-weight: 600; margin-bottom: 0.25rem; }
+  .subtitle { color: var(--text-secondary); margin-bottom: 1.5rem; }
+  .label { font-size: 0.7rem; color: var(--text-tertiary); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.5rem; }
+  .options { display: flex; flex-direction: column; gap: 0.75rem; margin-top: 1rem; }
+  .option { background: var(--bg-secondary); border: 2px solid var(--border); border-radius: 10px; padding: 1rem 1.25rem; cursor: pointer; transition: all 0.15s ease; display: flex; align-items: flex-start; gap: 1rem; }
+  .option:hover { border-color: var(--accent); }
+  .option.selected { background: rgba(79, 141, 247, 0.1); border-color: var(--accent); }
+  .option .letter { background: var(--bg-tertiary); color: var(--text-secondary); width: 1.75rem; height: 1.75rem; border-radius: 6px; display: flex; align-items: center; justify-content: center; font-weight: 600; font-size: 0.85rem; flex-shrink: 0; }
+  .option.selected .letter { background: var(--accent); color: white; }
+  .option .content { flex: 1; }
+  .option .content h3 { font-size: 0.95rem; margin-bottom: 0.15rem; }
+  .option .content p { color: var(--text-secondary); font-size: 0.85rem; margin: 0; }
+  .mockup { background: var(--bg-secondary); border: 1px solid var(--border); border-radius: 10px; overflow: hidden; margin-bottom: 1.5rem; }
+  .mockup-header { background: var(--bg-tertiary); padding: 0.5rem 1rem; font-size: 0.75rem; color: var(--text-secondary); border-bottom: 1px solid var(--border); }
+  .mockup-body { padding: 0; }
+  .mock-button { background: var(--accent); color: white; border: none; padding: 0.35rem 0.8rem; border-radius: 6px; font-size: 0.8rem; cursor: pointer; }
+  .mock-button-ghost { background: transparent; color: var(--text-secondary); border: 1px solid var(--border); padding: 0.35rem 0.8rem; border-radius: 6px; font-size: 0.8rem; cursor: pointer; }
+  .badge { padding: 2px 8px; border-radius: 10px; font-size: 10px; }
+  .status-dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; }
+  .field-label { font-size: 0.7rem; color: var(--text-tertiary); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 4px; }
+  .field-value { color: var(--text-primary); font-size: 13px; }
+  .input-mock { background: var(--bg-tertiary); border: 1px solid var(--border); border-radius: 6px; padding: 6px 10px; color: var(--text-primary); font-size: 12px; width: 100%; }
+</style>
+</head>
+<body>
+<div class="header"><h1>Eventyr Wireframes</h1><div class="status">Dark Mode</div></div>
+<div class="main"><div id="claude-content">
+
+<h2>Wireframe 3 — Todo Detail</h2>
+<p class="subtitle">Full todo detail: edit fields, status changer, dependencies, comments, calendar sync indicator.</p>
+
+<div class="mockup">
+  <div class="mockup-header">Todo Detail — "Set up registration page"</div>
+  <div class="mockup-body">
+    <div style="display:flex;height:580px;font-size:13px">
+
+      <!-- Sidebar -->
+      <div style="width:200px;border-right:1px solid var(--border);background:var(--bg-secondary);padding:12px 10px;display:flex;flex-direction:column;gap:4px">
+        <div style="font-weight:700;font-size:15px;margin-bottom:8px;color:var(--text-primary);display:flex;align-items:center;gap:6px">
+          <span style="background:var(--accent);color:#fff;width:22px;height:22px;border-radius:5px;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800">E</span>
+          Eventyr
+        </div>
+        <div class="label" style="margin-top:8px">Your Events</div>
+        <div style="background:var(--bg-tertiary);color:var(--text-primary);padding:6px 8px;border-radius:6px;font-weight:500">Hackathon 2026</div>
+        <div style="color:var(--text-secondary);padding:6px 8px;border-radius:6px">Rust Workshop</div>
+        <div style="color:var(--text-secondary);padding:6px 8px;border-radius:6px">Tech Socials Q4</div>
+      </div>
+
+      <!-- Main area -->
+      <div style="flex:1;display:flex;flex-direction:column">
+
+        <!-- Breadcrumb + tabs -->
+        <div style="border-bottom:1px solid var(--border);padding:0 16px">
+          <div style="padding:8px 0;display:flex;align-items:center;gap:6px;font-size:11px;color:var(--text-tertiary)">
+            <span>Hackathon 2026</span> <span>/</span> <span>Todos</span> <span>/</span> <span style="color:var(--text-primary)">Set up registration page</span>
+          </div>
+          <div style="display:flex;gap:0">
+            <div style="padding:8px 14px;color:var(--text-tertiary)">Overview</div>
+            <div style="padding:8px 14px;border-bottom:2px solid var(--accent);color:var(--text-primary);font-weight:500">Todos</div>
+            <div style="padding:8px 14px;color:var(--text-tertiary)">Pages</div>
+            <div style="padding:8px 14px;color:var(--text-tertiary)">Shortcuts</div>
+            <div style="padding:8px 14px;color:var(--text-tertiary)">Settings</div>
+          </div>
+        </div>
+
+        <!-- Detail content -->
+        <div style="flex:1;overflow:auto;padding:16px;display:flex;gap:16px">
+
+          <!-- Left: main detail -->
+          <div style="flex:1;display:flex;flex-direction:column;gap:14px">
+
+            <!-- Title + status -->
+            <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:8px;padding:16px">
+              <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:12px">
+                <div style="flex:1">
+                  <div class="field-label">Task Title</div>
+                  <div style="font-size:16px;font-weight:600;color:var(--text-primary)">Set up registration page</div>
+                </div>
+                <div style="display:flex;gap:6px">
+                  <span style="display:inline-flex;align-items:center;gap:5px;background:var(--bg-tertiary);padding:4px 10px;border-radius:10px;font-size:11px;color:var(--text-secondary);cursor:pointer"><span class="status-dot" style="background:var(--text-tertiary)"></span> Not Started ▾</span>
+                </div>
+              </div>
+              <div style="display:flex;gap:6px">
+                <button class="mock-button-ghost" style="font-size:11px">Not Started</button>
+                <button class="mock-button-ghost" style="font-size:11px;border-color:var(--accent);color:var(--accent)">In Progress</button>
+                <button class="mock-button-ghost" style="font-size:11px">Blocked</button>
+                <button class="mock-button-ghost" style="font-size:11px">Completed</button>
+              </div>
+            </div>
+
+            <!-- Fields -->
+            <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:8px;padding:16px;display:grid;grid-template-columns:1fr 1fr;gap:14px">
+              <div>
+                <div class="field-label">Due Date</div>
+                <div class="field-value">Sep 6, 2026</div>
+              </div>
+              <div>
+                <div class="field-label">Days Left</div>
+                <div class="field-value" style="color:var(--text-secondary)">2 days</div>
+              </div>
+              <div>
+                <div class="field-label">Assigned To</div>
+                <div style="display:flex;align-items:center;gap:6px;margin-top:2px"><span style="background:#333;border-radius:50%;width:22px;height:22px;display:flex;align-items:center;justify-content:center;font-size:9px;color:var(--text-secondary)">KA</span> <span class="field-value">Kate</span></div>
+              </div>
+              <div>
+                <div class="field-label">Created By</div>
+                <div class="field-value" style="color:var(--text-secondary)">Kate · Aug 28</div>
+              </div>
+            </div>
+
+            <!-- Description -->
+            <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:8px;padding:16px">
+              <div class="field-label" style="margin-bottom:8px">Description</div>
+              <div style="color:var(--text-secondary);font-size:13px;line-height:1.6">
+                Set up the registration page on the event website. Include fields for team name, member emails, project category, and dietary preferences. Link to the GitHub repo for submission guidelines.
+              </div>
+            </div>
+
+            <!-- Dependencies -->
+            <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:8px;padding:16px">
+              <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+                <div class="field-label" style="margin-bottom:0">Dependencies</div>
+                <button class="mock-button-ghost" style="font-size:11px">+ Add</button>
+              </div>
+              <div style="display:flex;flex-direction:column;gap:8px">
+                <div style="display:flex;align-items:center;gap:8px;padding:8px 10px;background:var(--bg-tertiary);border-radius:6px">
+                  <span style="color:var(--warning);font-size:14px">⚠</span>
+                  <span style="flex:1;color:var(--text-primary);font-size:12px">Confirm budget</span>
+                  <span style="display:inline-flex;align-items:center;gap:5px;background:rgba(79,141,247,0.15);padding:2px 8px;border-radius:10px;font-size:10px;color:var(--accent)"><span class="status-dot" style="background:var(--accent)"></span> In Progress</span>
+                  <span style="color:var(--text-tertiary);font-size:11px;cursor:pointer">✕</span>
+                </div>
+                <div style="color:var(--text-tertiary);font-size:11px;font-style:italic">This task cannot be completed until "Confirm budget" is done.</div>
+              </div>
+            </div>
+
+            <!-- Comments -->
+            <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:8px;padding:16px">
+              <div class="field-label" style="margin-bottom:12px">Comments (3)</div>
+              <div style="display:flex;flex-direction:column;gap:12px">
+                <div style="display:flex;gap:10px">
+                  <span style="background:#333;border-radius:50%;width:28px;height:28px;display:flex;align-items:center;justify-content:center;font-size:10px;color:var(--text-secondary);flex-shrink:0">KA</span>
+                  <div style="flex:1">
+                    <div style="display:flex;align-items:center;gap:6px"><span style="color:var(--text-primary);font-size:12px;font-weight:600">Kate</span> <span style="color:var(--text-tertiary);font-size:10px">2 days ago</span></div>
+                    <div style="color:var(--text-secondary);font-size:12px;margin-top:2px">Should we add a field for T-shirt sizes too?</div>
+                  </div>
+                </div>
+                <div style="display:flex;gap:10px">
+                  <span style="background:#333;border-radius:50%;width:28px;height:28px;display:flex;align-items:center;justify-content:center;font-size:10px;color:var(--text-secondary);flex-shrink:0">JD</span>
+                  <div style="flex:1">
+                    <div style="display:flex;align-items:center;gap:6px"><span style="color:var(--text-primary);font-size:12px;font-weight:600">John</span> <span style="color:var(--text-tertiary);font-size:10px">1 day ago</span></div>
+                    <div style="color:var(--text-secondary);font-size:12px;margin-top:2px">Good idea. Let's also ask for GitHub username.</div>
+                  </div>
+                </div>
+                <div style="display:flex;gap:10px">
+                  <span style="background:#333;border-radius:50%;width:28px;height:28px;display:flex;align-items:center;justify-content:center;font-size:10px;color:var(--text-secondary);flex-shrink:0">SA</span>
+                  <div style="flex:1">
+                    <div style="display:flex;align-items:center;gap:6px"><span style="color:var(--text-primary);font-size:12px;font-weight:600">Sara</span> <span style="color:var(--text-tertiary);font-size:10px">3h ago</span></div>
+                    <div style="color:var(--text-secondary);font-size:12px;margin-top:2px">I'll draft the form today and share it for review.</div>
+                  </div>
+                </div>
+              </div>
+              <!-- Add comment -->
+              <div style="display:flex;gap:10px;margin-top:14px;padding-top:14px;border-top:1px solid var(--border)">
+                <span style="background:#333;border-radius:50%;width:28px;height:28px;display:flex;align-items:center;justify-content:center;font-size:10px;color:var(--text-secondary);flex-shrink:0">KA</span>
+                <div style="flex:1;display:flex;gap:8px">
+                  <input class="input-mock" placeholder="Write a comment..." style="flex:1"/>
+                  <button class="mock-button" style="font-size:11px">Send</button>
+                </div>
+              </div>
+            </div>
+
+          </div>
+
+          <!-- Right: sidebar -->
+          <div style="width:220px;display:flex;flex-direction:column;gap:12px">
+
+            <!-- Calendar sync -->
+            <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:8px;padding:14px">
+              <div class="field-label" style="margin-bottom:8px">Google Calendar</div>
+              <div style="display:flex;align-items:center;gap:6px;font-size:11px;color:var(--success)">
+                <span class="status-dot" style="background:var(--success)"></span> Synced
+              </div>
+              <div style="color:var(--text-tertiary);font-size:10px;margin-top:4px">Event created in Kate's calendar</div>
+              <button class="mock-button-ghost" style="font-size:10px;margin-top:8px;width:100%">Sync Now</button>
+            </div>
+
+            <!-- Telegram reminder -->
+            <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:8px;padding:14px">
+              <div class="field-label" style="margin-bottom:8px">Telegram Reminder</div>
+              <div style="display:flex;align-items:center;gap:6px;font-size:11px;color:var(--text-secondary)">
+                <span class="status-dot" style="background:var(--accent)"></span> Scheduled
+              </div>
+              <div style="color:var(--text-tertiary);font-size:10px;margin-top:4px">Will remind 3 and 1 day before due</div>
+            </div>
+
+            <!-- Meta -->
+            <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:8px;padding:14px">
+              <div class="field-label" style="margin-bottom:8px">Meta</div>
+              <div style="display:flex;flex-direction:column;gap:6px;font-size:11px;color:var(--text-tertiary)">
+                <div>Created: Aug 28</div>
+                <div>Updated: Sep 2</div>
+                <div>ID: #todo-8a3f</div>
+              </div>
+            </div>
+
+            <!-- Danger -->
+            <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:8px;padding:14px;margin-top:auto">
+              <button class="mock-button-ghost" style="font-size:11px;color:var(--error);border-color:var(--error);width:100%">Delete Todo</button>
+            </div>
+
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="options">
+  <div class="option" data-choice="good" onclick="toggleSelect(this)">
+    <div class="letter">✓</div>
+    <div class="content"><h3>Looks good</h3><p>Move on to the Pages wireframe</p></div>
+  </div>
+  <div class="option" data-choice="adjust" onclick="toggleSelect(this)">
+    <div class="letter">✎</div>
+    <div class="content"><h3>Needs changes</h3><p>I'll describe what to adjust</p></div>
+  </div>
+</div>
+
+</div></div>
+<div class="indicator-bar"><span id="indicator-text">Click an option above, then return to the terminal</span></div>
+</body></html>

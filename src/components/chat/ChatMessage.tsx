@@ -1,4 +1,6 @@
 import { Sparkles, User } from "lucide-react";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 import { cn } from "@/lib/utils";
 
 export interface Citation {
@@ -31,13 +33,17 @@ export function ChatMessage({ message }: { message: ChatMessageData }) {
       <div className={cn("flex max-w-[80%] flex-col gap-2", isUser && "items-end")}>
         <div
           className={cn(
-            "rounded-2xl px-4 py-2.5 text-sm leading-relaxed whitespace-pre-wrap break-words",
+            "chat-markdown rounded-2xl px-4 py-2.5 text-sm leading-relaxed break-words",
             isUser
               ? "bg-accent text-white rounded-br-sm"
               : "bg-bg-tertiary text-text-primary border border-border rounded-bl-sm",
           )}
         >
-          {message.content}
+          {isUser ? (
+            <span className="whitespace-pre-wrap">{message.content}</span>
+          ) : (
+            <ReactMarkdown remarkPlugins={[remarkGfm]}>{message.content}</ReactMarkdown>
+          )}
           {message.pending && (
             <span className="ml-1 inline-flex items-center gap-1 align-middle">
               <span className="thinking-dot" />

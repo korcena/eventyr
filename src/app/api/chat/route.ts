@@ -128,12 +128,13 @@ export async function POST(request: Request) {
     `event: rate\ndata: ${JSON.stringify({ remaining: rate.remaining, limit: RATE_LIMIT })}\n\n`,
   );
 
+  const reader = llmStream.getReader();
   const combined = new ReadableStream<Uint8Array>({
     start(controller) {
       controller.enqueue(citationPrefix);
     },
     async pull(controller) {
-      const { value, done } = await llmStream.getReader().read();
+      const { value, done } = await reader.read();
       if (done) {
         controller.enqueue(rateFooter);
         controller.close();
@@ -142,7 +143,7 @@ export async function POST(request: Request) {
       }
     },
     cancel() {
-      llmStream.cancel();
+      reader.cancel();
     },
   });
 

@@ -120,6 +120,7 @@ export async function POST(request: Request) {
 
     // Create a pending request
     await supabase.from("telegram_pending").insert({
+      user_id: matchingUser.id,
       chat_id: chatId,
       email: matchingUser.email!,
       telegram_username: username,

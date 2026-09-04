@@ -15,7 +15,7 @@ export async function getPendingTelegram() {
   const { data } = await supabase
     .from("telegram_pending")
     .select("*")
-    .ilike("email", user.email)
+    .eq("user_id", user.id)
     .eq("status", "pending")
     .order("created_at", { ascending: false });
 

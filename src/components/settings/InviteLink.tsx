@@ -1,18 +1,19 @@
 "use client";
 
-import { useState } from "react";
+import { useTransition, useState } from "react";
 import { Card, Button } from "@/components/ui";
 
 export function InviteLink({
   token,
   baseUrl,
-  onRegenerate,
+  regenerateAction,
 }: {
   token: string;
   baseUrl: string;
-  onRegenerate: () => void;
+  regenerateAction: () => Promise<void>;
 }) {
   const [copied, setCopied] = useState(false);
+  const [pending, startTransition] = useTransition();
   const url = `${baseUrl}/invite/${token}`;
 
   return (
@@ -33,9 +34,11 @@ export function InviteLink({
         >
           {copied ? "Copied!" : "Copy Link"}
         </Button>
-        <Button size="sm" variant="ghost" onClick={onRegenerate}>
-          Regenerate
-        </Button>
+        <form action={() => startTransition(regenerateAction)}>
+          <Button type="submit" size="sm" variant="ghost" disabled={pending}>
+            {pending ? "Regenerating..." : "Regenerate"}
+          </Button>
+        </form>
       </div>
     </Card>
   );

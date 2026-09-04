@@ -1,13 +1,15 @@
-import { getEvent } from "@/lib/actions/events";
+import { getEvent, regenerateInviteToken } from "@/lib/actions/events";
 import { getRoles, getMembers } from "@/lib/actions/members";
 import { hasPermission } from "@/lib/permissions";
 import { getCurrentUser } from "@/lib/auth";
 import { getCalendarTokens } from "@/lib/calendar";
+import { revalidatePath } from "next/cache";
 import { Card } from "@/components/ui";
 import { RolesManager } from "@/components/settings/RolesManager";
 import { InviteLink } from "@/components/settings/InviteLink";
 import { CalendarSettings } from "@/components/settings/CalendarSettings";
 import { TelegramConfig } from "@/components/settings/TelegramConfig";
+import { DeleteEventButton } from "@/components/settings/DeleteEventButton";
 
 export default async function SettingsPage({
   params,
@@ -134,7 +136,7 @@ export default async function SettingsPage({
       )}
 
       {canManageMembers && (
-        <InviteLink token={event.invite_token} baseUrl={baseUrl} onRegenerate={() => {}} />
+        <InviteLink token={event.invite_token} baseUrl={baseUrl} regenerateAction={async () => { "use server"; await regenerateInviteToken(eventId); revalidatePath(`/app/events/${eventId}/settings`); }} />
       )}
 
       <CalendarSettings
@@ -149,9 +151,7 @@ export default async function SettingsPage({
           <p className="mb-3 text-xs text-text-tertiary">
             Deleting an event permanently removes all todos, pages, and data. This cannot be undone.
           </p>
-          <button className="rounded-md border border-error px-4 py-2 text-sm text-error hover:bg-error/10">
-            Delete Event
-          </button>
+          <DeleteEventButton eventId={event.id} />
         </div>
       )}
     </div>

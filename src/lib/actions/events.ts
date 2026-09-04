@@ -26,21 +26,37 @@ export interface EventRow {
 export async function getEventsForUser(): Promise<EventRow[]> {
   const supabase = await createClient();
   const user = await getCurrentUser();
-  if (!user) return [];
+  if (!user) {
+    console.error("[getEventsForUser] No user found");
+    return [];
+  }
 
-  const { data: memberships } = await supabase
+  const { data: memberships, error: memberError } = await supabase
     .from("event_members")
     .select("event_id")
     .eq("user_id", user.id);
 
-  if (!memberships || memberships.length === 0) return [];
+  if (memberError) {
+    console.error("[getEventsForUser] Error fetching memberships:", memberError);
+    return [];
+  }
+
+  if (!memberships || memberships.length === 0) {
+    console.error("[getEventsForUser] No memberships found for user", user.id);
+    return [];
+  }
 
   const eventIds = memberships.map((m) => m.event_id);
-  const { data } = await supabase
+  const { data, error: eventError } = await supabase
     .from("events")
     .select("*")
     .in("id", eventIds)
     .order("created_at", { ascending: false });
+
+  if (eventError) {
+    console.error("[getEventsForUser] Error fetching events:", eventError);
+    return [];
+  }
 
   return (data as EventRow[]) ?? [];
 }
@@ -113,6 +129,7 @@ export async function deleteEvent(eventId: string): Promise<ActionResult> {
   const { error } = await supabase.from("events").delete().eq("id", eventId).eq("created_by", user.id);
   if (error) return { error: error.message };
 
+  revalidatePath("/app");
   redirect("/app");
   return { error: null };
 }

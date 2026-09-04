@@ -257,23 +257,26 @@
 ### Steps
 
 1. **Google Cloud setup**
-   - Create OAuth credentials (client ID + secret) with `calendar.events` scope.
+   - Create OAuth credentials (client ID + secret) with `calendar.events` + `calendar.calendars.readonly` scope.
    - Env vars: `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `GOOGLE_REDIRECT_URI`.
 
 2. **Database migrations**
-   - `006_calendar.sql` — `google_calendar_tokens`, `calendar_sync_state` tables, RLS policies.
+   - `006_calendar.sql` — `google_calendar_tokens` (with `calendar_id` column), `calendar_sync_state` tables, RLS policies.
 
 3. **API routes**
    - `src/app/api/calendar/connect/route.ts` — redirect to Google OAuth consent.
-   - `src/app/api/calendar/callback/route.ts` — handle callback, exchange code for tokens, store encrypted.
-   - `src/app/api/calendar/sync/route.ts` — POST `{ todoId }` → create/update/delete Google Calendar event for the assigned user.
+   - `src/app/api/calendar/callback/route.ts` — handle callback, exchange code for tokens, store encrypted. Fetch user's calendar list, redirect to calendar picker UI.
+   - `src/app/api/calendar/list/route.ts` — GET: return user's calendars (id, summary, primary) via Calendar API.
+   - `src/app/api/calendar/select/route.ts` — POST `{ calendarId }` → store selected `calendar_id` in `google_calendar_tokens`.
+   - `src/app/api/calendar/sync/route.ts` — POST `{ todoId }` → create/update/delete Google Calendar event in the user's selected calendar.
 
 4. **Token encryption**
    - `src/lib/crypto.ts` — AES encrypt/decrypt using `ENCRYPTION_KEY` env var.
 
 5. **Sync logic**
    - `src/lib/calendar.ts`:
-     - `syncTodoToCalendar(todoId, userId)` — create or update Google event, upsert `calendar_sync_state`.
+     - `getCalendarList(userId)` — fetch user's calendars via Calendar API (for picker).
+     - `syncTodoToCalendar(todoId, userId)` — create or update Google event in the user's selected `calendar_id`, upsert `calendar_sync_state`.
      - `deleteCalendarEvent(todoId, userId)` — remove Google event, delete sync state.
      - `refreshTokenIfNeeded(userId)` — refresh access token using stored refresh token.
    - Trigger sync on: todo create (if assigned), todo update (title/description/due_date/assigned_to change), todo delete, status change.
@@ -281,16 +284,20 @@
 
 6. **UI**
    - Settings page: "Connect Google Calendar" button → OAuth flow.
-   - Connected state: show status, "Disconnect" button.
+   - After OAuth: calendar picker — dropdown of user's calendars (fetched via API) + manual calendar ID entry field. "Save" stores the selected `calendar_id`.
+   - Connected state: show selected calendar name, "Change Calendar" and "Disconnect" buttons.
    - Todo detail: calendar sync indicator (synced / not synced / error).
    - Banner in app if tokens expired: "Reconnect Google Calendar".
 
 ### Verification
 - Connect Google Calendar → tokens stored encrypted.
-- Create a todo assigned to yourself → appears in Google Calendar.
+- Calendar picker shows user's calendars → select one → `calendar_id` stored.
+- Manual calendar ID entry works as fallback.
+- Create a todo assigned to yourself → appears in the selected Google Calendar.
 - Edit the todo → Google Calendar event updates.
 - Delete the todo → Google Calendar event removed.
 - Reassign todo → event moves to new assignee's calendar (if connected).
+- "Change Calendar" lets user switch the target calendar.
 - Token refresh works after expiry.
 - `npm run typecheck && npm run lint` pass.
 

@@ -192,6 +192,7 @@ Structured types (organizer_list, prize_list) enable search and AI indexing.
 | access_token | text | encrypted |
 | refresh_token | text | encrypted |
 | expires_at | timestamptz | |
+| calendar_id | text | selected calendar ID (user picks from their calendar list after OAuth, or enters manually) |
 
 #### `calendar_sync_state`
 | Column | Type | Notes |
@@ -266,7 +267,9 @@ Structured types (organizer_list, prize_list) enable search and AI indexing.
 
 ### 4. Google Calendar Sync
 - Per-user OAuth (each user connects their own Google Calendar).
-- When a todo is assigned to a user with a connected calendar, it syncs as a Google Calendar event (title, due date/time, description).
+- After OAuth, the app fetches the user's calendar list via the Calendar API and lets them pick which calendar to sync to. Manual calendar ID entry is also supported as a fallback.
+- The selected `calendar_id` is stored in `google_calendar_tokens`.
+- When a todo is assigned to a user with a connected calendar, it syncs as a Google Calendar event (title, due date/time, description) to the selected calendar.
 - Auto-updates on todo edit, removes on delete.
 - Sync state tracked in `calendar_sync_state`.
 

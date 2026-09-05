@@ -9,6 +9,7 @@ interface DueTodo {
   status: string;
   assigned_to: string | null;
   events: { name: string } | null;
+  assignees: { user_id: string }[];
 }
 
 const MAX_RETRIES = 3;
@@ -146,7 +147,8 @@ export async function runReminders(options?: {
       status,
       assigned_to,
       event_id,
-      events:event_id(name)
+      events:event_id(name),
+      assignees:todo_assignees(user_id)
     `)
     .neq("status", "completed")
     .lt("due_date", windowEnd.toISOString())
@@ -194,27 +196,31 @@ export async function runReminders(options?: {
   }
 
   // Group todos by recipient chat ID
-  // For assigned todos: recipient = assignee
+  // For assigned todos: recipient = all assignees
   // For unassigned todos: recipient = all event members
   const recipientMap = new Map<string, TaggedTodo[]>();
 
   for (const todo of pending) {
-    if (todo.assigned_to) {
-      const { data: tgUser } = await supabase
+    const assigneeIds = todo.assignees?.map((a) => a.user_id) ?? [];
+
+    if (assigneeIds.length > 0) {
+      const { data: tgUsers } = await supabase
         .from("telegram_users")
         .select("chat_id")
-        .eq("user_id", todo.assigned_to)
-        .single();
+        .in("user_id", assigneeIds);
 
-      if (!tgUser?.chat_id) {
-        console.log(`[reminders] skip todo ${todo.id}: assignee has no Telegram connected`);
+      const chatIds = (tgUsers ?? []).map((u) => u.chat_id).filter(Boolean);
+      if (chatIds.length === 0) {
+        console.log(`[reminders] skip todo ${todo.id}: no assignees have Telegram connected`);
         skipped++;
         continue;
       }
 
-      const existing = recipientMap.get(tgUser.chat_id) ?? [];
-      existing.push(todo);
-      recipientMap.set(tgUser.chat_id, existing);
+      for (const chatId of chatIds) {
+        const existing = recipientMap.get(chatId) ?? [];
+        existing.push(todo);
+        recipientMap.set(chatId, existing);
+      }
     } else {
       const { data: members } = await supabase
         .from("event_members")

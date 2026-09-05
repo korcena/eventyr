@@ -3,7 +3,7 @@
 import { useActionState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { createTodo, type ActionResult } from "@/lib/actions/todos";
-import { Input, Textarea, Select, Button } from "@/components/ui";
+import { Input, Textarea, Button } from "@/components/ui";
 
 interface Member {
   id: string;
@@ -53,14 +53,22 @@ export function TodoForm({
         </div>
         <div>
           <label className="mb-1.5 block text-xs font-medium text-text-secondary">Assigned To</label>
-          <Select name="assigned_to">
-            <option value="">Unassigned</option>
+          <div className="max-h-32 overflow-y-auto rounded-md border border-border bg-bg-tertiary p-2 space-y-1">
+            {members.length === 0 && (
+              <span className="text-xs text-text-tertiary">No members</span>
+            )}
             {members.map((m) => (
-              <option key={m.id} value={m.user_id}>
+              <label key={m.id} className="flex items-center gap-2 text-xs text-text-secondary">
+                <input
+                  type="checkbox"
+                  name="assignee_ids"
+                  value={m.user_id}
+                  className="accent-accent"
+                />
                 {m.profile?.display_name ?? "Unknown"}
-              </option>
+              </label>
             ))}
-          </Select>
+          </div>
         </div>
       </div>
 

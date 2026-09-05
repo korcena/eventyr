@@ -75,7 +75,9 @@ export default async function TodoDetailPage({
             <div>
               <p className="mb-0.5 text-[10px] uppercase tracking-wider text-text-tertiary">Assigned To</p>
               <p className="text-sm text-text-primary">
-                {todo.assignee_profile?.display_name ?? "Unassigned"}
+                {todo.assignees && todo.assignees.length > 0
+                  ? todo.assignees.map((a) => a.profile?.display_name ?? "Unknown").join(", ")
+                  : "Unassigned"}
               </p>
             </div>
             <div>

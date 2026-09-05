@@ -76,7 +76,9 @@ export function TodoList({ todos, eventId, dependencies }: TodoListProps) {
                 </Link>
               </td>
               <td className="px-2.5 py-2.5 text-text-secondary">
-                {todo.assignee_profile?.display_name ?? "—"}
+                {todo.assignees && todo.assignees.length > 0
+                  ? todo.assignees.map((a) => a.profile?.display_name ?? "Unknown").join(", ")
+                  : "—"}
               </td>
               <td className="px-2.5 py-2.5 text-text-secondary">
                 {todo.due_date ? new Date(todo.due_date).toLocaleDateString() : "—"}

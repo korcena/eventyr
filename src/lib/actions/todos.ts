@@ -16,7 +16,7 @@ export interface TodoRow {
   created_by: string | null;
   created_at: string;
   updated_at: string;
-  assignee_profile?: { display_name: string | null } | null;
+  assignees?: { user_id: string; profile: { display_name: string | null } | null }[];
 }
 
 export type ActionResult = { error: string | null };
@@ -27,7 +27,10 @@ export async function getTodos(eventId: string): Promise<TodoRow[]> {
     .from("todos")
     .select(`
       *,
-      assignee_profile:profiles!assigned_to(display_name)
+      assignees:todo_assignees(
+        user_id,
+        profile:profiles!user_id(display_name)
+      )
     `)
     .eq("event_id", eventId)
     .order("due_date", { ascending: true, nullsFirst: false });
@@ -45,7 +48,10 @@ export async function getTodo(todoId: string): Promise<TodoRow | null> {
     .from("todos")
     .select(`
       *,
-      assignee_profile:profiles!assigned_to(display_name)
+      assignees:todo_assignees(
+        user_id,
+        profile:profiles!user_id(display_name)
+      )
     `)
     .eq("id", todoId)
     .maybeSingle();
@@ -67,24 +73,43 @@ export async function createTodo(eventId: string, formData: FormData): Promise<A
   const title = formData.get("title") as string;
   if (!title?.trim()) return { error: "Title is required" };
 
+  const assigneeIds = formData.getAll("assignee_ids") as string[];
+  const validAssigneeIds = assigneeIds.filter(Boolean);
+
   const supabase = await createClient();
 
-  const { error } = await supabase.from("todos").insert({
+  const { data: todo, error } = await supabase.from("todos").insert({
     event_id: eventId,
     title: title.trim(),
     description: formData.get("description") as string || null,
     due_date: formData.get("due_date") as string || null,
     status: "not_started" as TodoStatus,
-    assigned_to: (formData.get("assigned_to") as string) || null,
+    assigned_to: validAssigneeIds[0] || null,
     created_by: user.id,
-  });
+  })
+  .select("id")
+  .single();
 
   if (error) return { error: error.message };
+
+  if (validAssigneeIds.length > 0) {
+    const { error: assigneeError } = await supabase.from("todo_assignees").insert(
+      validAssigneeIds.map((userId) => ({
+        todo_id: todo.id,
+        user_id: userId,
+      }))
+    );
+    if (assigneeError) console.error("[createTodo] assignee insert error:", assigneeError.message);
+  }
+
   return { error: null };
 }
 
 export async function updateTodo(todoId: string, formData: FormData): Promise<ActionResult> {
   const supabase = await createClient();
+
+  const assigneeIds = formData.getAll("assignee_ids") as string[];
+  const validAssigneeIds = assigneeIds.filter(Boolean);
 
   const { error } = await supabase
     .from("todos")
@@ -92,12 +117,31 @@ export async function updateTodo(todoId: string, formData: FormData): Promise<Ac
       title: formData.get("title") as string,
       description: formData.get("description") as string || null,
       due_date: formData.get("due_date") as string || null,
-      assigned_to: (formData.get("assigned_to") as string) || null,
+      assigned_to: validAssigneeIds[0] || null,
       updated_at: new Date().toISOString(),
     })
     .eq("id", todoId);
 
   if (error) return { error: error.message };
+
+  // Replace assignees
+  const { error: deleteError } = await supabase
+    .from("todo_assignees")
+    .delete()
+    .eq("todo_id", todoId);
+
+  if (deleteError) console.error("[updateTodo] assignee delete error:", deleteError.message);
+
+  if (validAssigneeIds.length > 0) {
+    const { error: assigneeError } = await supabase.from("todo_assignees").insert(
+      validAssigneeIds.map((userId) => ({
+        todo_id: todoId,
+        user_id: userId,
+      }))
+    );
+    if (assigneeError) console.error("[updateTodo] assignee insert error:", assigneeError.message);
+  }
+
   return { error: null };
 }
 

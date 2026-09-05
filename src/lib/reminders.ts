@@ -1,8 +1,6 @@
 import { createAdminClient } from "@/lib/supabase/admin";
 import { sendMessage } from "@/lib/telegram";
 
-type ReminderDaysBefore = 3 | 1;
-
 interface DueTodo {
   id: string;
   event_id: string;
@@ -10,11 +8,9 @@ interface DueTodo {
   due_date: string;
   status: string;
   assigned_to: string | null;
-  assignee_profile: { display_name: string | null } | null;
   events: { name: string } | null;
 }
 
-const REMINDER_DAYS: ReminderDaysBefore[] = [3, 1];
 const MAX_RETRIES = 3;
 const BASE_BACKOFF_MS = 2000;
 
@@ -34,29 +30,38 @@ function formatDueDate(iso: string): string {
   });
 }
 
-function buildMessage(
-  appName: string,
-  todo: DueTodo,
+function isOverdue(dueDate: string): boolean {
+  return new Date(dueDate).getTime() < Date.now();
+}
+
+function buildDigestMessage(
+  appBaseUrl: string,
+  todos: DueTodo[],
 ): string {
-  const todoUrl = `${appName}/app/events/${todo.event_id}/todos/${todo.id}`;
-  return [
-    `Task Reminder for ${todo.events?.name ?? "Unknown event"}`,
-    `<b>${todo.title}</b>`,
-    `Due: ${formatDueDate(todo.due_date)}`,
-    `Open: ${todoUrl}`,
-  ].join("\n");
+  const lines: string[] = [`You have ${todos.length} task${todos.length > 1 ? "s" : ""}`];
+
+  todos.forEach((todo, i) => {
+    const label = isOverdue(todo.due_date) ? "Overdue" : `Due on ${formatDueDate(todo.due_date)}`;
+    lines.push(`${i + 1}. ${todo.title} - ${label}`);
+  });
+
+  const firstEventId = todos[0]?.event_id;
+  const taskListLink = `${appBaseUrl}/app/events/${firstEventId}/todos`;
+  lines.push(`\nCheck your tasks in: ${taskListLink}`);
+
+  return lines.join("\n");
 }
 
 async function alreadySent(
   supabase: ReturnType<typeof createAdminClient>,
   todoId: string,
-  daysBefore: ReminderDaysBefore,
+  reminderType: string,
 ): Promise<boolean> {
   const { data } = await supabase
     .from("reminder_log")
     .select("id")
     .eq("todo_id", todoId)
-    .eq("days_before", daysBefore)
+    .eq("days_before", reminderType)
     .eq("status", "sent")
     .limit(1);
   return !!(data && data.length > 0);
@@ -66,14 +71,14 @@ async function logReminder(
   supabase: ReturnType<typeof createAdminClient>,
   todoId: string,
   eventId: string,
-  daysBefore: ReminderDaysBefore,
+  reminderType: string,
   status: "sent" | "failed",
   error: string | null,
 ): Promise<void> {
   const { error: insertError } = await supabase.from("reminder_log").insert({
     todo_id: todoId,
     event_id: eventId,
-    days_before: daysBefore,
+    days_before: parseInt(reminderType, 10),
     status,
     error,
   });
@@ -125,126 +130,150 @@ export async function runReminders(options?: {
   let failed = 0;
   let skipped = 0;
 
-  for (const daysBefore of REMINDER_DAYS) {
-    const dueWindowStart = new Date();
-    dueWindowStart.setUTCHours(0, 0, 0, 0);
-    dueWindowStart.setUTCDate(dueWindowStart.getUTCDate() + daysBefore);
+  // Fetch all incomplete todos due within 3 days (includes overdue)
+  const now = new Date();
+  now.setUTCHours(0, 0, 0, 0);
 
-    const dueWindowEnd = new Date(dueWindowStart);
-    dueWindowEnd.setUTCDate(dueWindowEnd.getUTCDate() + 1);
+  const windowEnd = new Date(now);
+  windowEnd.setUTCDate(windowEnd.getUTCDate() + 4); // 3 days ahead + today
 
-    const { data: todos, error } = await supabase
-      .from("todos")
-      .select(`
-        id,
-        title,
-        due_date,
-        status,
-        assigned_to,
-        event_id,
-        assignee_profile:profiles!assigned_to(display_name),
-        events:event_id(name)
-      `)
-      .neq("status", "completed")
-      .gte("due_date", dueWindowStart.toISOString())
-      .lt("due_date", dueWindowEnd.toISOString());
+  const { data: allTodos, error } = await supabase
+    .from("todos")
+    .select(`
+      id,
+      title,
+      due_date,
+      status,
+      assigned_to,
+      event_id,
+      events:event_id(name)
+    `)
+    .neq("status", "completed")
+    .lt("due_date", windowEnd.toISOString())
+    .order("due_date", { ascending: true });
 
-    if (error) {
-      console.error(`[reminders] query failed:`, error.message);
+  if (error) {
+    console.error(`[reminders] query failed:`, error.message);
+    return { sent, failed, skipped, dryRun };
+  }
+
+  const todos = (allTodos ?? []) as unknown as DueTodo[];
+
+  // Determine reminder type for each todo
+  type TaggedTodo = DueTodo & { reminderType: string };
+  const pending: TaggedTodo[] = [];
+
+  for (const todo of todos) {
+    const due = new Date(todo.due_date);
+    const diffDays = Math.floor((due.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+
+    let reminderType: string | null = null;
+    if (diffDays < 0) {
+      reminderType = "0"; // overdue
+    } else if (diffDays === 1) {
+      reminderType = "1";
+    } else if (diffDays === 3) {
+      reminderType = "3";
+    }
+
+    if (!reminderType) continue;
+
+    const already = await alreadySent(supabase, todo.id, reminderType);
+    if (already) {
+      console.log(`[reminders] skip todo ${todo.id} (${reminderType}d): already sent`);
+      skipped++;
       continue;
     }
 
-    for (const todo of (todos ?? []) as unknown as DueTodo[]) {
-      const already = await alreadySent(supabase, todo.id, daysBefore);
-      if (already) {
-        console.log(`[reminders] skip todo ${todo.id} (${daysBefore}d): already sent`);
+    pending.push({ ...todo, reminderType });
+  }
+
+  if (pending.length === 0) {
+    console.log(`[reminders] done — sent: 0, failed: 0, skipped: ${skipped}`);
+    return { sent: 0, failed: 0, skipped, dryRun };
+  }
+
+  // Group todos by recipient chat ID
+  // For assigned todos: recipient = assignee
+  // For unassigned todos: recipient = all event members
+  const recipientMap = new Map<string, TaggedTodo[]>();
+
+  for (const todo of pending) {
+    if (todo.assigned_to) {
+      const { data: tgUser } = await supabase
+        .from("telegram_users")
+        .select("chat_id")
+        .eq("user_id", todo.assigned_to)
+        .single();
+
+      if (!tgUser?.chat_id) {
+        console.log(`[reminders] skip todo ${todo.id}: assignee has no Telegram connected`);
         skipped++;
         continue;
       }
 
-      if (todo.assigned_to) {
-        const { data: tgUser } = await supabase
-          .from("telegram_users")
-          .select("chat_id")
-          .eq("user_id", todo.assigned_to)
-          .single();
+      const existing = recipientMap.get(tgUser.chat_id) ?? [];
+      existing.push(todo);
+      recipientMap.set(tgUser.chat_id, existing);
+    } else {
+      const { data: members } = await supabase
+        .from("event_members")
+        .select("user_id")
+        .eq("event_id", todo.event_id);
 
-        if (!tgUser?.chat_id) {
-          console.log(`[reminders] skip todo ${todo.id}: assignee has no Telegram connected`);
-          skipped++;
-          continue;
-        }
+      const userIds = (members ?? []).map((m) => m.user_id);
+      if (userIds.length === 0) {
+        skipped++;
+        continue;
+      }
 
-        const text = buildMessage(appBaseUrl, todo);
+      const { data: tgUsers } = await supabase
+        .from("telegram_users")
+        .select("chat_id")
+        .in("user_id", userIds);
 
-        if (dryRun) {
-          console.log(`[reminders] DRY_RUN — would send to ${tgUser.chat_id}:`);
-          console.log(text);
-          continue;
-        }
+      const chatIds = (tgUsers ?? []).map((u) => u.chat_id).filter(Boolean);
+      if (chatIds.length === 0) {
+        console.log(`[reminders] skip todo ${todo.id}: no members have Telegram connected`);
+        skipped++;
+        continue;
+      }
 
-        const ok = await sendWithRetry(botToken, tgUser.chat_id, text);
-        await logReminder(
-          supabase,
-          todo.id,
-          todo.event_id,
-          daysBefore,
-          ok ? "sent" : "failed",
-          ok ? null : "Telegram send failed after retries",
-        );
-        if (ok) sent++;
-        else failed++;
-        console.log(`[reminders] todo ${todo.id} (${daysBefore}d): ${ok ? "sent" : "failed"}`);
-      } else {
-        const { data: members } = await supabase
-          .from("event_members")
-          .select("user_id")
-          .eq("event_id", todo.event_id);
-
-        const userIds = (members ?? []).map((m) => m.user_id);
-        if (userIds.length === 0) {
-          skipped++;
-          continue;
-        }
-
-        const { data: tgUsers } = await supabase
-          .from("telegram_users")
-          .select("chat_id")
-          .in("user_id", userIds);
-
-        const chatIds = (tgUsers ?? []).map((u) => u.chat_id).filter(Boolean);
-        if (chatIds.length === 0) {
-          console.log(`[reminders] skip todo ${todo.id}: no members have Telegram connected`);
-          skipped++;
-          continue;
-        }
-
-        const text = buildMessage(appBaseUrl, todo);
-
-        if (dryRun) {
-          console.log(`[reminders] DRY_RUN — would send to ${chatIds.length} members:`);
-          console.log(text);
-          continue;
-        }
-
-        let anyOk = false;
-        for (const chatId of chatIds) {
-          const ok = await sendWithRetry(botToken, chatId, text);
-          if (ok) anyOk = true;
-        }
-        await logReminder(
-          supabase,
-          todo.id,
-          todo.event_id,
-          daysBefore,
-          anyOk ? "sent" : "failed",
-          anyOk ? null : "Telegram send failed for all members",
-        );
-        if (anyOk) sent++;
-        else failed++;
-        console.log(`[reminders] todo ${todo.id} (${daysBefore}d, unassigned): sent to ${chatIds.length} members`);
+      for (const chatId of chatIds) {
+        const existing = recipientMap.get(chatId) ?? [];
+        existing.push(todo);
+        recipientMap.set(chatId, existing);
       }
     }
+  }
+
+  // Send one digest message per recipient
+  for (const [chatId, recipientTodos] of recipientMap) {
+    const text = buildDigestMessage(appBaseUrl, recipientTodos);
+
+    if (dryRun) {
+      console.log(`[reminders] DRY_RUN — would send to ${chatId}:`);
+      console.log(text);
+      continue;
+    }
+
+    const ok = await sendWithRetry(botToken, chatId, text);
+
+    // Log each todo in the digest
+    for (const todo of recipientTodos) {
+      await logReminder(
+        supabase,
+        todo.id,
+        todo.event_id,
+        todo.reminderType,
+        ok ? "sent" : "failed",
+        ok ? null : "Telegram send failed after retries",
+      );
+    }
+
+    if (ok) sent++;
+    else failed++;
+    console.log(`[reminders] digest sent to ${chatId}: ${ok ? "ok" : "failed"} (${recipientTodos.length} todos)`);
   }
 
   console.log(`[reminders] done — sent: ${sent}, failed: ${failed}, skipped: ${skipped}`);

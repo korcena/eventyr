@@ -11,7 +11,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   const events = await getEventsForUser();
 
   return (
-    <div className="flex min-h-screen bg-bg-primary">
+    <div className="flex h-screen overflow-hidden bg-bg-primary">
       <EventsSidebar events={events} user={user} />
       <div className="flex flex-1 flex-col overflow-hidden">{children}</div>
     </div>

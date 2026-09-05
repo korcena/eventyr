@@ -68,49 +68,24 @@ export async function fetchContext(
     });
   }
 
-  // Fetch pages with their blocks
+  // Fetch pages (content stored as HTML in the content column)
   const { data: pages } = await supabase
     .from("pages")
-    .select("id, event_id, title")
+    .select("id, event_id, title, content")
     .in("event_id", eventIds)
     .order("title", { ascending: true })
     .limit(20);
 
-  if (pages && pages.length > 0) {
-    const pageIds = pages.map((p) => p.id);
-    const { data: blocks } = await supabase
-      .from("page_blocks")
-      .select("id, page_id, type, content, position")
-      .in("page_id", pageIds)
-      .order("position", { ascending: true });
-
-    const blocksByPage = new Map<string, typeof blocks>();
-    for (const b of blocks ?? []) {
-      const arr = blocksByPage.get(b.page_id) ?? [];
-      arr.push(b);
-      blocksByPage.set(b.page_id, arr);
-    }
-
-    for (const p of pages) {
-      const pageBlocks = blocksByPage.get(p.id) ?? [];
-      const blockTexts = pageBlocks.map((b) => {
-        const c = b.content as Record<string, unknown>;
-        // Best-effort text extraction from common block shapes
-        const text =
-          (typeof c.text === "string" && c.text) ||
-          (typeof c.heading === "string" && c.heading) ||
-          (Array.isArray(c.items) ? c.items.join(", ") : "") ||
-          JSON.stringify(c);
-        return `[${b.type}] ${text}`;
-      });
-      chunks.push({
-        id: p.id,
-        eventId: p.event_id,
-        sourceType: "page",
-        sourceId: p.id,
-        content: `Page: ${p.title}\n${blockTexts.join("\n")}`,
-      });
-    }
+  for (const p of pages ?? []) {
+    // Strip HTML tags for a plain-text context snippet
+    const text = (p.content ?? "").replace(/<[^>]+>/g, " ").trim();
+    chunks.push({
+      id: p.id,
+      eventId: p.event_id,
+      sourceType: "page",
+      sourceId: p.id,
+      content: `Page: ${p.title}${text ? `\n${text}` : ""}`,
+    });
   }
 
   // Fetch shortcuts

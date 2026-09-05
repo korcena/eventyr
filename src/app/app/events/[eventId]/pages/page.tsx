@@ -1,9 +1,9 @@
-import { getPages, getBlocks, type PageRow, type BlockRow } from "@/lib/actions/pages";
+import { getPages, type PageRow } from "@/lib/actions/pages";
 import { hasPermission } from "@/lib/permissions";
-import { Button } from "@/components/ui";
 import { PageTree } from "@/components/page/PageTree";
 import { PageSearch } from "@/components/page/PageSearch";
 import Link from "next/link";
+import { revalidatePath } from "next/cache";
 
 export default async function PagesPage({
   params,
@@ -23,17 +23,24 @@ export default async function PagesPage({
               "use server";
               const { createPage } = await import("@/lib/actions/pages");
               await createPage(eventId, formData.get("title") as string);
+              revalidatePath(`/app/events/${eventId}/pages`);
             }}
             className="mb-3"
           >
-            <div className="flex gap-1.5">
+            <div className="flex gap-1">
               <input
                 name="title"
                 placeholder="New page title..."
-                className="flex-1 rounded-md border border-border bg-bg-tertiary px-2.5 py-1 text-xs text-text-primary placeholder:text-text-tertiary"
+                className="min-w-0 flex-1 rounded-md border border-border bg-bg-tertiary px-2.5 py-1 text-xs text-text-primary placeholder:text-text-tertiary"
                 required
               />
-              <Button type="submit" size="sm" variant="ghost">+</Button>
+              <button
+                type="submit"
+                className="flex h-[26px] w-[26px] flex-shrink-0 items-center justify-center rounded-md border border-border text-text-secondary hover:border-accent hover:text-accent"
+                title="Add page"
+              >
+                +
+              </button>
             </div>
           </form>
         )}

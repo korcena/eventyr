@@ -9,17 +9,10 @@ export interface PageRow {
   event_id: string;
   title: string;
   parent_id: string | null;
+  content: string | null;
   created_by: string | null;
   created_at: string;
   updated_at: string;
-}
-
-export interface BlockRow {
-  id: string;
-  page_id: string;
-  type: "heading" | "text" | "list" | "table" | "organizer_list" | "prize_list";
-  content: Record<string, unknown>;
-  position: number;
 }
 
 export type ActionResult = { error: string | null };
@@ -42,16 +35,6 @@ export async function getPage(pageId: string): Promise<PageRow | null> {
     .eq("id", pageId)
     .single();
   return (data as PageRow) ?? null;
-}
-
-export async function getBlocks(pageId: string): Promise<BlockRow[]> {
-  const supabase = await createClient();
-  const { data } = await supabase
-    .from("page_blocks")
-    .select("*")
-    .eq("page_id", pageId)
-    .order("position", { ascending: true });
-  return (data as BlockRow[]) ?? [];
 }
 
 export async function createPage(eventId: string, title: string, parentId?: string): Promise<ActionResult & { pageId?: string }> {
@@ -87,6 +70,16 @@ export async function updatePage(pageId: string, title: string): Promise<ActionR
   return { error: null };
 }
 
+export async function updatePageContent(pageId: string, content: string): Promise<ActionResult> {
+  const supabase = await createClient();
+  const { error } = await supabase
+    .from("pages")
+    .update({ content, updated_at: new Date().toISOString() })
+    .eq("id", pageId);
+  if (error) return { error: error.message };
+  return { error: null };
+}
+
 export async function deletePage(pageId: string): Promise<ActionResult> {
   const supabase = await createClient();
   const { error } = await supabase.from("pages").delete().eq("id", pageId);
@@ -94,82 +87,23 @@ export async function deletePage(pageId: string): Promise<ActionResult> {
   return { error: null };
 }
 
-export async function addBlock(pageId: string, type: BlockRow["type"], content: Record<string, unknown>): Promise<ActionResult & { blockId?: string }> {
-  const supabase = await createClient();
-
-  const { count } = await supabase
-    .from("page_blocks")
-    .select("*", { count: "exact", head: true })
-    .eq("page_id", pageId);
-
-  const position = count ?? 0;
-
-  const { data, error } = await supabase
-    .from("page_blocks")
-    .insert({ page_id: pageId, type, content, position })
-    .select("id")
-    .single();
-
-  if (error) return { error: error.message };
-  return { error: null, blockId: data.id };
-}
-
-export async function updateBlock(blockId: string, content: Record<string, unknown>): Promise<ActionResult> {
-  const supabase = await createClient();
-  const { error } = await supabase
-    .from("page_blocks")
-    .update({ content })
-    .eq("id", blockId);
-  if (error) return { error: error.message };
-  return { error: null };
-}
-
-export async function deleteBlock(blockId: string): Promise<ActionResult> {
-  const supabase = await createClient();
-  const { error } = await supabase.from("page_blocks").delete().eq("id", blockId);
-  if (error) return { error: error.message };
-  return { error: null };
-}
-
-export async function reorderBlocks(pageId: string, blockIds: string[]): Promise<ActionResult> {
-  const supabase = await createClient();
-  for (let i = 0; i < blockIds.length; i++) {
-    const { error } = await supabase
-      .from("page_blocks")
-      .update({ position: i })
-      .eq("id", blockIds[i]);
-    if (error) return { error: error.message };
-  }
-  return { error: null };
-}
-
 export async function searchPages(eventId: string, query: string): Promise<{ page: PageRow; snippet: string }[]> {
   const supabase = await createClient();
   const pages = await getPages(eventId);
   const results: { page: PageRow; snippet: string }[] = [];
+  const q = query.toLowerCase();
 
   for (const page of pages) {
-    if (page.title.toLowerCase().includes(query.toLowerCase())) {
+    if (page.title.toLowerCase().includes(q)) {
       results.push({ page, snippet: page.title });
       continue;
     }
-
-    const { data: blocks } = await supabase
-      .from("page_blocks")
-      .select("content")
-      .eq("page_id", page.id);
-
-    if (blocks) {
-      for (const block of blocks) {
-        const contentStr = JSON.stringify(block.content).toLowerCase();
-        if (contentStr.includes(query.toLowerCase())) {
-          const idx = contentStr.indexOf(query.toLowerCase());
-          const start = Math.max(0, idx - 20);
-          const snippet = contentStr.slice(start, start + 60);
-          results.push({ page, snippet: `...${snippet}...` });
-          break;
-        }
-      }
+    const text = (page.content ?? "").replace(/<[^>]+>/g, " ").toLowerCase();
+    if (text.includes(q)) {
+      const idx = text.indexOf(q);
+      const start = Math.max(0, idx - 20);
+      const snippet = (page.content ?? "").replace(/<[^>]+>/g, " ").slice(start, start + 60);
+      results.push({ page, snippet: `...${snippet}...` });
     }
   }
 

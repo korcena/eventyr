@@ -42,6 +42,7 @@
 
 html {
   color-scheme: dark;
+  font-size: 17px;
 }
 
 body {
@@ -194,4 +195,84 @@ body {
 .chat-markdown strong {
   font-weight: 600;
   color: var(--text-primary);
+}
+
+/* Quill editor dark theme overrides */
+.quill-wrapper .ql-toolbar {
+  border: 1px solid var(--border) !important;
+  border-bottom: none !important;
+  border-radius: 8px 8px 0 0;
+  background: var(--bg-secondary);
+  padding: 8px 10px;
+}
+.quill-wrapper .ql-container {
+  border: 1px solid var(--border) !important;
+  border-radius: 0 0 8px 8px;
+  background: var(--bg-tertiary);
+  min-height: 300px;
+  font-family: var(--font-sans), system-ui, sans-serif;
+  font-size: 15px;
+  color: var(--text-primary);
+}
+.quill-wrapper .ql-editor {
+  min-height: 300px;
+  padding: 16px;
+  color: var(--text-primary);
+}
+.quill-wrapper .ql-editor.ql-blank::before {
+  color: var(--text-tertiary);
+  font-style: normal;
+}
+.quill-wrapper .ql-snow .ql-stroke {
+  stroke: var(--text-secondary) !important;
+}
+.quill-wrapper .ql-snow .ql-fill {
+  fill: var(--text-secondary) !important;
+}
+.quill-wrapper .ql-snow .ql-picker {
+  color: var(--text-secondary) !important;
+}
+.quill-wrapper .ql-snow .ql-picker-options {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+}
+.quill-wrapper .ql-snow .ql-picker-item {
+  color: var(--text-secondary);
+}
+.quill-wrapper .ql-snow .ql-picker-item.ql-selected {
+  color: var(--accent);
+}
+.quill-wrapper .ql-tooltip {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  color: var(--text-secondary);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+  z-index: 100;
+}
+.quill-wrapper .ql-tooltip input[type="text"] {
+  background: var(--bg-primary);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  color: var(--text-primary);
+  padding: 2px 6px;
+}
+.quill-wrapper .ql-editor h1 { font-size: 1.5em; font-weight: 700; }
+.quill-wrapper .ql-editor h2 { font-size: 1.3em; font-weight: 600; }
+.quill-wrapper .ql-editor h3 { font-size: 1.1em; font-weight: 600; }
+.quill-wrapper .ql-editor a { color: var(--accent); }
+.quill-wrapper .ql-editor blockquote {
+  border-left: 3px solid var(--border-light);
+  color: var(--text-secondary);
+}
+.quill-wrapper .ql-editor code,
+.quill-wrapper .ql-editor pre {
+  background: var(--bg-primary);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+}
+.quill-wrapper .ql-editor pre {
+  padding: 12px;
+  overflow-x: auto;
 }

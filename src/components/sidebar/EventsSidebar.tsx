@@ -31,23 +31,23 @@ export function EventsSidebar({ events, user }: { events: SidebarEvent[]; user: 
     : user.email.slice(0, 2).toUpperCase();
 
   return (
-    <aside className="flex w-[200px] flex-col border-r border-border bg-bg-secondary px-2.5 py-3">
+    <aside className="flex w-[220px] flex-col border-r border-border bg-bg-secondary px-2.5 py-3">
       <Link href="/app" className="mb-4 flex items-center gap-1.5 px-1">
-        <span className="flex h-5.5 w-5.5 items-center justify-center rounded bg-accent text-[11px] font-extrabold text-white" style={{ width: 22, height: 22 }}>
+        <span className="flex items-center justify-center rounded bg-accent text-xs font-extrabold text-white" style={{ width: 24, height: 24 }}>
           E
         </span>
-        <span className="text-[15px] font-bold text-text-primary">Eventyr</span>
+        <span className="text-base font-bold text-text-primary">Eventyr</span>
       </Link>
 
       <div className="mb-1 px-1">
-        <span className="text-[10px] font-medium uppercase tracking-wider text-text-tertiary">
+        <span className="text-xs font-medium uppercase tracking-wider text-text-tertiary">
           Your Events
         </span>
       </div>
 
       <nav className="flex flex-1 flex-col gap-0.5 overflow-y-auto">
         {events.length === 0 ? (
-          <p className="px-1 py-2 text-[11px] text-text-tertiary">
+          <p className="px-1 py-2 text-xs text-text-tertiary">
             No events yet. Create one to get started.
           </p>
         ) : (
@@ -58,7 +58,7 @@ export function EventsSidebar({ events, user }: { events: SidebarEvent[]; user: 
                 key={event.id}
                 href={`/app/events/${event.id}`}
                 className={cn(
-                  "rounded-md px-2 py-1.5 text-[12px] transition-colors",
+                  "rounded-md px-2 py-1.5 text-sm transition-colors",
                   isActive
                     ? "bg-bg-tertiary font-medium text-text-primary"
                     : "text-text-secondary hover:text-text-primary",
@@ -75,7 +75,7 @@ export function EventsSidebar({ events, user }: { events: SidebarEvent[]; user: 
         <Link
           href="/app/chat"
           className={cn(
-            "mb-1 flex items-center gap-1.5 rounded-md px-2 py-1.5 text-[12px] transition-colors",
+            "mb-1 flex items-center gap-1.5 rounded-md px-2 py-1.5 text-sm transition-colors",
             pathname === "/app/chat"
               ? "bg-bg-tertiary font-medium text-accent"
               : "text-text-secondary hover:text-text-primary",
@@ -86,7 +86,7 @@ export function EventsSidebar({ events, user }: { events: SidebarEvent[]; user: 
         <Link
           href="/app/settings"
           className={cn(
-            "mb-1 flex items-center gap-1.5 rounded-md px-2 py-1.5 text-[12px] transition-colors",
+            "mb-1 flex items-center gap-1.5 rounded-md px-2 py-1.5 text-sm transition-colors",
             pathname === "/app/settings"
               ? "bg-bg-tertiary font-medium text-accent"
               : "text-text-secondary hover:text-text-primary",
@@ -95,16 +95,16 @@ export function EventsSidebar({ events, user }: { events: SidebarEvent[]; user: 
           Settings
         </Link>
         <form action={logout} className="flex items-center gap-2 px-1 py-1">
-          <div className="flex h-7 w-7 items-center justify-center rounded-full bg-[#333] text-[10px] text-text-secondary">
+          <div className="flex h-7 w-7 items-center justify-center rounded-full bg-[#333] text-xs text-text-secondary">
             {initials}
           </div>
           <div className="min-w-0 flex-1">
-            <div className="truncate text-[12px] text-text-primary">{user.displayName}</div>
-            <div className="truncate text-[10px] text-text-tertiary">{user.email}</div>
+            <div className="truncate text-sm text-text-primary">{user.displayName}</div>
+            <div className="truncate text-xs text-text-tertiary">{user.email}</div>
           </div>
           <button
             type="submit"
-            className="text-[10px] text-text-tertiary hover:text-text-secondary"
+            className="text-xs text-text-tertiary hover:text-text-secondary"
             title="Log out"
           >
             Logout

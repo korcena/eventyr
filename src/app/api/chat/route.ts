@@ -38,7 +38,7 @@ function buildSystemPrompt(chunks: ContextChunk[]): string {
   return [
     "You are Eventyr's assistant. Answer questions about the user's events, todos, pages, and shortcuts.",
     "Answer based ONLY on the provided event data context below. If the context is empty or does not contain the answer, say you don't have enough information.",
-    "When you use a piece of context, cite it by referring to the source type and source id (e.g. [page: <id>]).",
+    "When you reference a specific todo, page, or shortcut, append a citation in the format [todo:id], [page:id], or [shortcut:id] using the exact source id from the context. Do not add emojis or extra text inside the brackets.",
     "Be concise and helpful. Use markdown for structure when useful.",
     "",
     "Context from the user's events:",

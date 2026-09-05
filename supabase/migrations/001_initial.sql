@@ -274,7 +274,7 @@ create policy "Members with can_delete_todo can delete todos"
 create table if not exists public.todo_assignees (
   id uuid primary key default gen_random_uuid(),
   todo_id uuid not null references public.todos(id) on delete cascade,
-  user_id uuid not null references auth.users(id) on delete cascade,
+  user_id uuid not null references public.profiles(id) on delete cascade,
   created_at timestamptz default now(),
   unique(todo_id, user_id)
 );

@@ -6,12 +6,12 @@ import { getComments } from "@/lib/actions/comments";
 import { getMembers } from "@/lib/actions/members";
 import { getTodos } from "@/lib/actions/todos";
 import { getCurrentUser } from "@/lib/auth";
-import { daysLeft, formatDaysLeft } from "@/lib/todo-status";
 import { Card } from "@/components/ui";
 import { StatusBadge } from "@/components/todo/StatusBadge";
 import { CommentThread } from "@/components/todo/CommentThread";
 import { DependencyList } from "@/components/todo/DependencyList";
 import { TodoStatusChanger } from "@/components/todo/TodoStatusChanger";
+import { TodoEditForm } from "@/components/todo/TodoEditForm";
 
 export default async function TodoDetailPage({
   params,
@@ -31,7 +31,6 @@ export default async function TodoDetailPage({
     getCurrentUser(),
   ]);
 
-  const days = daysLeft(todo.due_date);
   const availableDeps = allTodos.filter(
     (t) => t.id !== todoId && !dependencies.some((d) => d.depends_on_todo_id === t.id),
   );
@@ -59,34 +58,20 @@ export default async function TodoDetailPage({
         </Card>
 
         <Card>
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <p className="mb-0.5 text-[10px] uppercase tracking-wider text-text-tertiary">Due Date</p>
-              <p className="text-sm text-text-primary">
-                {todo.due_date ? new Date(todo.due_date).toLocaleDateString() : "—"}
-              </p>
-            </div>
-            <div>
-              <p className="mb-0.5 text-[10px] uppercase tracking-wider text-text-tertiary">Days Left</p>
-              <p className={`text-sm ${days !== null && days < 0 ? "text-error" : "text-text-secondary"}`}>
-                {formatDaysLeft(days)}
-              </p>
-            </div>
-            <div>
-              <p className="mb-0.5 text-[10px] uppercase tracking-wider text-text-tertiary">Assigned To</p>
-              <p className="text-sm text-text-primary">
-                {todo.assignees && todo.assignees.length > 0
-                  ? todo.assignees.map((a) => a.profile?.display_name ?? "Unknown").join(", ")
-                  : "Unassigned"}
-              </p>
-            </div>
-            <div>
-              <p className="mb-0.5 text-[10px] uppercase tracking-wider text-text-tertiary">Created</p>
-              <p className="text-sm text-text-secondary">
-                {new Date(todo.created_at).toLocaleDateString()}
-              </p>
-            </div>
-          </div>
+          <p className="mb-2 text-[10px] uppercase tracking-wider text-text-tertiary">Edit Task</p>
+          <TodoEditForm
+            todoId={todo.id}
+            eventId={eventId}
+            title={todo.title}
+            description={todo.description}
+            dueDate={todo.due_date}
+            assignees={todo.assignees ?? []}
+            members={members.map((m) => ({
+              id: m.id,
+              user_id: m.user_id,
+              profile: m.profile,
+            }))}
+          />
         </Card>
 
         {todo.description && (

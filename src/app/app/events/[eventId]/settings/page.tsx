@@ -1,11 +1,12 @@
 import { getEvent, regenerateInviteToken, updateEvent } from "@/lib/actions/events";
-import { getRoles, getMembers } from "@/lib/actions/members";
+import { getRoles, getMembers, updateMemberRole, removeMember } from "@/lib/actions/members";
 import { hasPermission } from "@/lib/permissions";
 import { getCurrentUser } from "@/lib/auth";
 import { getCalendarTokens } from "@/lib/calendar";
 import { revalidatePath } from "next/cache";
 import { Card } from "@/components/ui";
 import { RolesManager } from "@/components/settings/RolesManager";
+import { MembersList } from "@/components/settings/MembersList";
 import { InviteLink } from "@/components/settings/InviteLink";
 import { CalendarSettings } from "@/components/settings/CalendarSettings";
 import { DeleteEventButton } from "@/components/settings/DeleteEventButton";
@@ -104,34 +105,26 @@ export default async function SettingsPage({
       {canManageMembers && <RolesManager eventId={eventId} roles={roles} />}
 
       {canManageMembers && (
-        <Card>
-          <h3 className="mb-3 text-sm font-semibold text-text-primary">Members ({members.length})</h3>
-          <div className="space-y-2">
-            {members.map((member) => {
-              const initials = member.profile?.display_name
-                ? member.profile.display_name.split(" ").map((w) => w[0]).slice(0, 2).join("").toUpperCase()
-                : "??";
-              return (
-                <div key={member.id} className="flex items-center gap-2 border-b border-border pb-2 last:border-0 last:pb-0">
-                  <div className="flex h-6 w-6 items-center justify-center rounded-full bg-[#333] text-[9px] text-text-secondary">
-                    {initials}
-                  </div>
-                  <span className="flex-1 text-xs text-text-primary">
-                    {member.profile?.display_name ?? "Unknown"}
-                  </span>
-                  <select
-                    defaultValue={member.role_id}
-                    className="w-28 rounded-md border border-border bg-bg-tertiary px-2 py-1 text-xs text-text-secondary"
-                  >
-                    {roles.map((role) => (
-                      <option key={role.id} value={role.id}>{role.name}</option>
-                    ))}
-                  </select>
-                </div>
-              );
-            })}
-          </div>
-        </Card>
+        <MembersList
+          members={members.map((m) => ({
+            id: m.id,
+            user_id: m.user_id,
+            role_id: m.role_id,
+            profile: m.profile,
+            role: m.role,
+          }))}
+          roles={roles}
+          onRoleChange={async (memberId, roleId) => {
+            "use server";
+            await updateMemberRole(memberId, roleId);
+            revalidatePath(`/app/events/${eventId}/settings`);
+          }}
+          onRemove={async (memberId) => {
+            "use server";
+            await removeMember(memberId);
+            revalidatePath(`/app/events/${eventId}/settings`);
+          }}
+        />
       )}
 
       {canManageMembers && (

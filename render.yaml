@@ -29,22 +29,5 @@ services:
         sync: false
       - key: TELEGRAM_BOT_TOKEN
         sync: false
-  - type: cron
-    name: eventyr-reminders
-    schedule: "0 9 * * *"
-    command: npx tsx src/cron/send-reminders.ts
-    runtime: node
-    buildCommand: npm install
-    envVars:
-      - key: NEXT_PUBLIC_SUPABASE_URL
+      - key: CRON_SECRET
         sync: false
-      - key: SUPABASE_SERVICE_ROLE_KEY
-        sync: false
-      - key: ENCRYPTION_KEY
-        sync: false
-      - key: APP_BASE_URL
-        sync: false
-      - key: TELEGRAM_BOT_TOKEN
-        sync: false
-      - key: DRY_RUN
-        value: "false"

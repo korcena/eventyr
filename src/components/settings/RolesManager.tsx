@@ -150,7 +150,7 @@ export function RolesManager({
           Owner role is created automatically. Add custom roles here.
         </p>
       ) : (
-        <div className="space-y-2">
+        <div className="max-h-80 space-y-2 overflow-y-auto pr-1">
           {sortedRoles.map((role) => (
             <div key={role.id} className="rounded-md border border-border bg-bg-tertiary p-3">
               <div className="mb-2 flex items-center justify-between gap-2">

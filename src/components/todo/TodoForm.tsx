@@ -1,6 +1,7 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useEffect, useRef } from "react";
+import { useRouter } from "next/navigation";
 import { createTodo, type ActionResult } from "@/lib/actions/todos";
 import { Input, Textarea, Select, Button } from "@/components/ui";
 
@@ -17,11 +18,21 @@ export function TodoForm({
   eventId: string;
   members: Member[];
 }) {
-  const createAction = (_prev: ActionResult, formData: FormData) =>
-    createTodo(eventId, formData);
+  const router = useRouter();
+  const submitted = useRef(false);
+  const createAction = (_prev: ActionResult, formData: FormData) => {
+    submitted.current = true;
+    return createTodo(eventId, formData);
+  };
   const [state, formAction, pending] = useActionState<ActionResult, FormData>(createAction, {
     error: null,
   });
+
+  useEffect(() => {
+    if (submitted.current && state.error === null && !pending) {
+      router.push(`/app/events/${eventId}/todos`);
+    }
+  }, [state.error, pending, router, eventId]);
 
   return (
     <form action={formAction} className="max-w-lg space-y-4">

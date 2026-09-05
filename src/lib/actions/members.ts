@@ -1,6 +1,7 @@
 "use server";
 
 import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { getCurrentUser } from "@/lib/auth";
 
 export interface RoleRow {
@@ -31,17 +32,29 @@ export async function getRoles(eventId: string): Promise<RoleRow[]> {
 }
 
 export async function getMembers(eventId: string): Promise<MemberRow[]> {
-  const supabase = await createClient();
-  const { data } = await supabase
+  const admin = createAdminClient();
+  const { data, error } = await admin
     .from("event_members")
     .select(`
       *,
-      profile:profiles(display_name, avatar_url),
       role:roles(*)
     `)
     .eq("event_id", eventId)
     .order("joined_at", { ascending: true });
-  return (data as MemberRow[]) ?? [];
+  if (error) console.error("[getMembers] Error:", error.message);
+  if (!data || data.length === 0) return [];
+
+  const userIds = data.map((m) => m.user_id);
+  const { data: profiles } = await admin
+    .from("profiles")
+    .select("id, display_name, avatar_url")
+    .in("id", userIds);
+
+  const profileMap = new Map(profiles?.map((p) => [p.id, p]) ?? []);
+  return (data as MemberRow[]).map((m) => ({
+    ...m,
+    profile: profileMap.get(m.user_id) ?? null,
+  }));
 }
 
 export type ActionResult = { error: string | null };
@@ -78,8 +91,8 @@ export async function deleteRole(roleId: string): Promise<ActionResult> {
 }
 
 export async function updateMemberRole(memberId: string, roleId: string): Promise<ActionResult> {
-  const supabase = await createClient();
-  const { error } = await supabase
+  const admin = createAdminClient();
+  const { error } = await admin
     .from("event_members")
     .update({ role_id: roleId })
     .eq("id", memberId);
@@ -88,8 +101,8 @@ export async function updateMemberRole(memberId: string, roleId: string): Promis
 }
 
 export async function removeMember(memberId: string): Promise<ActionResult> {
-  const supabase = await createClient();
-  const { error } = await supabase.from("event_members").delete().eq("id", memberId);
+  const admin = createAdminClient();
+  const { error } = await admin.from("event_members").delete().eq("id", memberId);
   if (error) return { error: error.message };
   return { error: null };
 }

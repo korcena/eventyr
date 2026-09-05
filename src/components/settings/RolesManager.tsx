@@ -1,7 +1,14 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useTransition, useRef, useCallback } from "react";
+import { useRouter } from "next/navigation";
 import { Card, Button, Input } from "@/components/ui";
+import {
+  createRole,
+  updateRole,
+  deleteRole,
+  type RoleRow,
+} from "@/lib/actions/members";
 
 const PERMISSION_FLAGS = [
   { key: "can_create_todo", label: "Create Todo" },
@@ -14,41 +21,124 @@ const PERMISSION_FLAGS = [
   { key: "can_manage_integrations", label: "Manage Integrations" },
 ];
 
-export function RolesManager({ eventId }: { eventId: string }) {
-  const [roles, setRoles] = useState<Array<{
-    id: string;
-    name: string;
-    permissions: Record<string, boolean>;
-  }>>([]);
+export function RolesManager({
+  eventId,
+  roles: initialRoles = [],
+}: {
+  eventId: string;
+  roles?: RoleRow[];
+}) {
+  const router = useRouter();
+  const [roles, setRoles] = useState<RoleRow[]>(initialRoles ?? []);
+  const sortedRoles = [...roles].sort((a, b) => a.name.localeCompare(b.name));
   const [newRoleName, setNewRoleName] = useState("");
   const [error, setError] = useState<string | null>(null);
+  const [pending, startTransition] = useTransition();
+  const debounceRefs = useRef<Map<string, ReturnType<typeof setTimeout>>>(new Map());
 
-  // This is a placeholder - in production, roles would be loaded via server
-  // and mutations would call server actions
+  const scheduleSave = useCallback(
+    (roleId: string, name: string, permissions: Record<string, boolean>) => {
+      const existing = debounceRefs.current.get(roleId);
+      if (existing) clearTimeout(existing);
+      const timer = setTimeout(() => {
+        startTransition(async () => {
+          const res = await updateRole(roleId, name, permissions);
+          if (res.error) setError(res.error);
+        });
+        debounceRefs.current.delete(roleId);
+      }, 500);
+      debounceRefs.current.set(roleId, timer);
+    },
+    [],
+  );
+
+  function handleCreate() {
+    if (!newRoleName.trim()) return;
+    setError(null);
+    const name = newRoleName.trim();
+    const permissions = Object.fromEntries(
+      PERMISSION_FLAGS.map((f) => [f.key, false]),
+    );
+    startTransition(async () => {
+      const res = await createRole(eventId, name, permissions);
+      if (res.error) {
+        setError(res.error);
+        return;
+      }
+      setNewRoleName("");
+      router.refresh();
+      setRoles((prev) => [
+        ...prev,
+        {
+          id: crypto.randomUUID(),
+          event_id: eventId,
+          name,
+          permissions,
+        },
+      ]);
+    });
+  }
+
+  function handlePermissionChange(roleId: string, flagKey: string, checked: boolean) {
+    setRoles((prev) =>
+      prev.map((r) => {
+        if (r.id !== roleId) return r;
+        const updated = { ...r.permissions, [flagKey]: checked };
+        scheduleSave(roleId, r.name, updated);
+        return { ...r, permissions: updated };
+      }),
+    );
+  }
+
+  function handleNameChange(roleId: string, name: string) {
+    setRoles((prev) =>
+      prev.map((r) => {
+        if (r.id !== roleId) return r;
+        scheduleSave(roleId, name, r.permissions);
+        return { ...r, name };
+      }),
+    );
+  }
+
+  function handleDelete(roleId: string) {
+    const timer = debounceRefs.current.get(roleId);
+    if (timer) {
+      clearTimeout(timer);
+      debounceRefs.current.delete(roleId);
+    }
+    startTransition(async () => {
+      const res = await deleteRole(roleId);
+      if (res.error) {
+        setError(res.error);
+        return;
+      }
+      setRoles((prev) => prev.filter((r) => r.id !== roleId));
+    });
+  }
 
   return (
     <Card>
       <div className="mb-3 flex items-center justify-between">
-        <h3 className="text-sm font-semibold text-text-primary">Roles & Permissions</h3>
+        <h3 className="text-sm font-semibold text-text-primary">Roles &amp; Permissions</h3>
         <div className="flex gap-2">
           <Input
             placeholder="Role name..."
             value={newRoleName}
             onChange={(e) => setNewRoleName(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") {
+                e.preventDefault();
+                handleCreate();
+              }
+            }}
             className="w-32 text-xs"
           />
           <Button
             size="sm"
             variant="ghost"
-            onClick={() => {
-              if (!newRoleName.trim()) return;
-              setRoles([...roles, {
-                id: crypto.randomUUID(),
-                name: newRoleName.trim(),
-                permissions: Object.fromEntries(PERMISSION_FLAGS.map((f) => [f.key, false])),
-              }]);
-              setNewRoleName("");
-            }}
+            disabled={pending || !newRoleName.trim()}
+            onClick={handleCreate}
+            className="whitespace-nowrap"
           >
             + New Role
           </Button>
@@ -61,19 +151,17 @@ export function RolesManager({ eventId }: { eventId: string }) {
         </p>
       ) : (
         <div className="space-y-2">
-          {roles.map((role) => (
+          {sortedRoles.map((role) => (
             <div key={role.id} className="rounded-md border border-border bg-bg-tertiary p-3">
-              <div className="mb-2 flex items-center justify-between">
+              <div className="mb-2 flex items-center justify-between gap-2">
                 <input
-                  className="bg-transparent text-sm font-medium text-text-primary focus:outline-none"
+                  className="min-w-0 flex-1 bg-transparent text-sm font-medium text-text-primary focus:outline-none"
                   value={role.name}
-                  onChange={(e) =>
-                    setRoles(roles.map((r) => (r.id === role.id ? { ...r, name: e.target.value } : r)))
-                  }
+                  onChange={(e) => handleNameChange(role.id, e.target.value)}
                 />
                 <button
                   className="text-xs text-text-tertiary hover:text-error"
-                  onClick={() => setRoles(roles.filter((r) => r.id !== role.id))}
+                  onClick={() => handleDelete(role.id)}
                 >
                   Delete
                 </button>
@@ -85,11 +173,7 @@ export function RolesManager({ eventId }: { eventId: string }) {
                       type="checkbox"
                       checked={role.permissions[flag.key] ?? false}
                       onChange={(e) =>
-                        setRoles(roles.map((r) =>
-                          r.id === role.id
-                            ? { ...r, permissions: { ...r.permissions, [flag.key]: e.target.checked } }
-                            : r,
-                        ))
+                        handlePermissionChange(role.id, flag.key, e.target.checked)
                       }
                       className="accent-accent"
                     />

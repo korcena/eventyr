@@ -1,4 +1,4 @@
-import { getEvent, regenerateInviteToken } from "@/lib/actions/events";
+import { getEvent, regenerateInviteToken, updateEvent } from "@/lib/actions/events";
 import { getRoles, getMembers } from "@/lib/actions/members";
 import { hasPermission } from "@/lib/permissions";
 import { getCurrentUser } from "@/lib/auth";
@@ -36,7 +36,14 @@ export default async function SettingsPage({
       {canEditEvent && (
         <Card>
           <h3 className="mb-3 text-sm font-semibold text-text-primary">General</h3>
-          <form className="grid grid-cols-2 gap-3">
+          <form
+            action={async (formData: FormData) => {
+              "use server";
+              await updateEvent(eventId, formData);
+              revalidatePath(`/app/events/${eventId}/settings`);
+            }}
+            className="grid grid-cols-2 gap-3"
+          >
             <div>
               <label className="mb-1 block text-[10px] uppercase tracking-wider text-text-tertiary">Name</label>
               <input
@@ -94,7 +101,7 @@ export default async function SettingsPage({
         </Card>
       )}
 
-      {canManageMembers && <RolesManager eventId={eventId} />}
+      {canManageMembers && <RolesManager eventId={eventId} roles={roles} />}
 
       {canManageMembers && (
         <Card>

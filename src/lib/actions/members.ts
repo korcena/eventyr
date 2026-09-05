@@ -1,3 +1,5 @@
+"use server";
+
 import { createClient } from "@/lib/supabase/server";
 import { getCurrentUser } from "@/lib/auth";
 
@@ -68,7 +70,10 @@ export async function updateRole(roleId: string, name: string, permissions: Reco
 export async function deleteRole(roleId: string): Promise<ActionResult> {
   const supabase = await createClient();
   const { error } = await supabase.from("roles").delete().eq("id", roleId);
-  if (error) return { error: error.message };
+  if (error) {
+    console.error("[deleteRole] Error:", error.message);
+    return { error: error.message };
+  }
   return { error: null };
 }
 

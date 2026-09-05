@@ -23,7 +23,7 @@ create policy "Members can view todo assignees"
 -- Users who can create todos can assign people
 create policy "Can insert todo assignees"
   on public.todo_assignees for insert
-  using (
+  with check (
     exists (
       select 1 from public.todos t
       join public.event_members em on em.event_id = t.event_id

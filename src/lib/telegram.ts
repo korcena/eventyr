@@ -7,6 +7,7 @@ export async function sendMessage(
   botToken: string,
   chatId: string,
   text: string,
+  parseMode: "Markdown" | "HTML" = "Markdown",
 ): Promise<boolean> {
   const url = `https://api.telegram.org/bot${botToken}/sendMessage`;
   try {
@@ -16,7 +17,7 @@ export async function sendMessage(
       body: JSON.stringify({
         chat_id: chatId,
         text,
-        parse_mode: "Markdown",
+        parse_mode: parseMode,
       }),
     });
     const data = (await res.json()) as { ok: boolean; description?: string };

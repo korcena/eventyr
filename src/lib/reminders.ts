@@ -37,14 +37,12 @@ function formatDueDate(iso: string): string {
 function buildMessage(
   appName: string,
   todo: DueTodo,
-  daysBefore: ReminderDaysBefore,
 ): string {
   const todoUrl = `${appName}/app/events/${todo.event_id}/todos/${todo.id}`;
-  const when = daysBefore === 1 ? "*tomorrow*" : `*in ${daysBefore} days*`;
   return [
-    `⏰ *Reminder: ${todo.title}*`,
-    `Event: ${todo.events?.name ?? "Unknown event"}`,
-    `Due: ${formatDueDate(todo.due_date)} (${when})`,
+    `Task Reminder for ${todo.events?.name ?? "Unknown event"}`,
+    `<b>${todo.title}</b>`,
+    `Due: ${formatDueDate(todo.due_date)}`,
     `Open: ${todoUrl}`,
   ].join("\n");
 }
@@ -90,7 +88,7 @@ async function sendWithRetry(
   text: string,
 ): Promise<boolean> {
   for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
-    const ok = await sendMessage(botToken, chatId, text);
+    const ok = await sendMessage(botToken, chatId, text, "HTML");
     if (ok) return true;
     if (attempt < MAX_RETRIES) {
       const backoff = BASE_BACKOFF_MS * Math.pow(2, attempt - 1);
@@ -177,7 +175,7 @@ export async function runReminders(options?: {
           continue;
         }
 
-        const text = buildMessage(appBaseUrl, todo, daysBefore);
+        const text = buildMessage(appBaseUrl, todo);
 
         if (dryRun) {
           console.log(`[reminders] DRY_RUN — would send to ${tgUser.chat_id}:`);
@@ -221,7 +219,7 @@ export async function runReminders(options?: {
           continue;
         }
 
-        const text = buildMessage(appBaseUrl, todo, daysBefore);
+        const text = buildMessage(appBaseUrl, todo);
 
         if (dryRun) {
           console.log(`[reminders] DRY_RUN — would send to ${chatIds.length} members:`);
